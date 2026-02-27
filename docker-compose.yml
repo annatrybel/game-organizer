@@ -1,0 +1,6 @@
+services:
+  gameorganizer.api:
+    image: ${DOCKER_REGISTRY-}gameorganizerapi
+    build:
+      context: .
+      dockerfile: GameOrganizer.Api/Dockerfile
