@@ -7,6 +7,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using Microsoft.AspNetCore.HttpOverrides;
+using GameOrganizer.Api.Services;
+using GameOrganizer.Api.Services.Interfaces;
 
 const string envFileName = ".env";
 var currentDirectory = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
@@ -94,10 +96,10 @@ builder.Services.AddCors(options =>
 // Add services to the container
 //builder.Services.AddScoped<RoleSeeder>();
 //builder.Services.AddScoped<SeedManager>();
-//builder.Services.AddScoped<IAuthService, AuthService>();
-//builder.Services.AddScoped<IUserManagementService, UserManagementService>();
-//builder.Services.AddScoped<IEmailService, EmailService>();
-//builder.Services.AddScoped<IEmailSender, EmailSender>();
+builder.Services.AddScoped<IAuthService, AuthService>(); 
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IEmailSender, EmailSender>();
 
 
 
