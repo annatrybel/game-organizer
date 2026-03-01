@@ -11,6 +11,7 @@ using GameOrganizer.Api.Services;
 using GameOrganizer.Api.Services.Interfaces;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
+using GameOrganizer.Api.Seeders;
 
 const string envFileName = ".env";
 var currentDirectory = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
@@ -110,9 +111,17 @@ builder.Services.AddRateLimiter(options =>
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
+// Sentry 
+builder.WebHost.UseSentry(options =>
+{
+    options.Dsn = builder.Configuration["Sentry:Dsn"] ?? Environment.GetEnvironmentVariable("Sentry__Dsn");
+    options.Debug = true;   
+    options.TracesSampleRate = 1.0; // Przechwytywanie z wydajności/performance'u
+});
+
 // Add services to the container
-//builder.Services.AddScoped<RoleSeeder>();
-//builder.Services.AddScoped<SeedManager>();
+builder.Services.AddScoped<RoleSeeder>();
+builder.Services.AddScoped<SeedManager>();
 builder.Services.AddScoped<IAuthService, AuthService>(); 
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
