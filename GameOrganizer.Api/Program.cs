@@ -168,6 +168,32 @@ forwardedHeadersOptions.KnownProxies.Clear();
 
 app.UseForwardedHeaders(forwardedHeadersOptions);
 
+// Polityka nagłówków
+var policyCollection = new HeaderPolicyCollection()
+    .AddDefaultSecurityHeaders() 
+    .AddContentSecurityPolicy(builder =>
+    {
+        builder.AddDefaultSrc().Self();
+
+        builder.AddConnectSrc().Self().From("https://localhost:7128");
+
+        if (app.Environment.IsDevelopment())
+        {
+            builder.AddStyleSrc().Self().UnsafeInline();
+            builder.AddScriptSrc().Self().UnsafeInline();
+        }
+    })
+    .AddCustomHeader("X-Permitted-Cross-Domain-Policies", "none") 
+    .AddPermissionsPolicy(builder =>
+    {
+        builder.AddCamera().None();
+        builder.AddMicrophone().None();
+        builder.AddGeolocation().None();
+    })
+    .RemoveServerHeader(); 
+
+// Middleware
+app.UseSecurityHeaders(policyCollection);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
