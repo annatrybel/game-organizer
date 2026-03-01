@@ -116,7 +116,17 @@ namespace GameOrganizer.Api.Services
         public async Task<ServiceResult<LoginResponse>> Login(LoginDto loginDto)
         {
             var user = await _userManager.FindByEmailAsync(loginDto.Email);
-            if (user == null || !await _userManager.CheckPasswordAsync(user, loginDto.Password))
+
+            if (user == null) return ServiceResult<LoginResponse>.Failure(AuthErrors.InvalidCredentials());
+
+            var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, lockoutOnFailure: true);
+
+            if (result.IsLockedOut)
+            {
+                return ServiceResult<LoginResponse>.Failure("Konto jest zablokowane. Spróbuj za 15 minut.");
+            }
+
+            if (!result.Succeeded)
             {
                 return ServiceResult<LoginResponse>.Failure(AuthErrors.InvalidCredentials());
             }

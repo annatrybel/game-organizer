@@ -9,6 +9,8 @@ using System.Text;
 using Microsoft.AspNetCore.HttpOverrides;
 using GameOrganizer.Api.Services;
 using GameOrganizer.Api.Services.Interfaces;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 const string envFileName = ".env";
 var currentDirectory = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
@@ -53,6 +55,9 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     options.Password.RequireDigit = true;
     options.Password.RequiredLength = 8;
     options.Password.RequireUppercase = true;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
 })
     .AddEntityFrameworkStores<GameOrganizerDbContext>()
     .AddDefaultTokenProviders();
@@ -92,6 +97,18 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("LoginPolicy", opt =>
+    {
+        opt.Window = TimeSpan.FromMinutes(1); // Okno czasu
+        opt.PermitLimit = 5;                  // Maksymalnie 5 żądań
+        opt.QueueLimit = 0;                   // Brak kolejkowania
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    });
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
 
 // Add services to the container
 //builder.Services.AddScoped<RoleSeeder>();
@@ -166,6 +183,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapHealthChecks("/healthz");
 app.MapControllers();

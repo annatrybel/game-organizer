@@ -3,6 +3,7 @@ using GameOrganizer.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Sprache;
 
 namespace GameOrganizer.Api.Controllers
@@ -49,6 +50,7 @@ namespace GameOrganizer.Api.Controllers
         /// <param name="loginDto">Dane logowania (e-mail i hasło).</param>
         /// <returns>Obiekt zawierający token JWT.</returns>
         /// 
+        [EnableRateLimiting("LoginPolicy")]
         [HttpPost("login")]
         [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)] 
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
