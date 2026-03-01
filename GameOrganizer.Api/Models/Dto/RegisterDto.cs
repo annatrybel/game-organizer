@@ -1,9 +1,19 @@
-﻿namespace GameOrganizer.Api.Models.Dto
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace GameOrganizer.Api.Models.Dto
 {
     public class RegisterDto
     {
-        public string Email { get; set; } = string.Empty;
-        public string Username { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        [Required]
+    [EmailAddress]
+        public string Email { get; set; }
+
+        [Required]
+        [RegularExpression(@"^[a-zA-Z0-9_\-]*$", ErrorMessage = "Username zawiera niedozwolone znaki.")]
+        public string Username { get; set; }
+
+        [Required]
+        [MinLength(8)]
+        public string Password { get; set; }
     }
 }
