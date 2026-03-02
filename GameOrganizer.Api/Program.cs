@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using GameOrganizer.Api.Seeders;
 
+
 const string envFileName = ".env";
 var currentDirectory = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
 string envFilePath = null;
@@ -83,7 +84,12 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["JWT:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]))
     };
-});
+})
+.AddFacebook(options =>
+{
+    options.AppId = builder.Configuration["Authentication:Facebook:AppId"];
+    options.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
+}); ;
 
 
 var frontendUrl = builder.Configuration["FRONTEND_BASE_URL"] ?? "http://localhost:3000";
