@@ -229,6 +229,14 @@ app.UseRateLimiter();
 app.MapHealthChecks("/healthz");
 app.MapControllers();
 
+using (var scope = app.Services.CreateScope())
+{
+    var ctx = scope.ServiceProvider.GetRequiredService<GameOrganizerDbContext>();
+    ctx.Database.Migrate();
+
+    var seedManager = scope.ServiceProvider.GetRequiredService<SeedManager>();
+    await seedManager.Seed();
+}
 
 app.Run();
 
