@@ -31,7 +31,8 @@ namespace GameOrganizer.Api.Models
        
         public DbSet<HistoryLog> HistoryLogs { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
-
+        public DbSet<Game> Games { get; set; }
+        public DbSet<Genre> Genres { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
