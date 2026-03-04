@@ -12,7 +12,7 @@ using GameOrganizer.Api.Services.Interfaces;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using GameOrganizer.Api.Seeders;
-
+using GameOrganizer.Api.Hubs;
 
 const string envFileName = ".env";
 var currentDirectory = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
@@ -30,6 +30,7 @@ else
 {
     Console.WriteLine("OSTRZEŻENIE: Nie znaleziono pliku .env.");
 }
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,6 +65,10 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     .AddEntityFrameworkStores<GameOrganizerDbContext>()
     .AddDefaultTokenProviders();
 
+// czat
+builder.Services.AddSignalR();
+
+
 // Konfiguracja uwierzytelniania oparta o JWT (tokeny)
 builder.Services.AddAuthentication(options =>
 {
@@ -84,6 +89,19 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["JWT:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]))
     };
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chatHub"))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
 })
 .AddFacebook(options =>
 {
@@ -100,7 +118,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(frontendUrl)
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials(); 
     });
 });
 
@@ -125,6 +144,7 @@ builder.WebHost.UseSentry(options =>
     options.TracesSampleRate = 1.0; // Przechwytywanie z wydajności/performance'u
 });
 
+
 // Add services to the container
 builder.Services.AddScoped<RoleSeeder>();
 builder.Services.AddScoped<SeedManager>();
@@ -132,6 +152,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
+builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<IHistoryLogService, HistoryLogService>();
 
 
 
@@ -172,6 +194,8 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
+
+app.MapHub<ChatHub>("/chatHub");
 
 // Konfiguracja do poprawnej obs�ugi za reverse proxy (na Render)
 var forwardedHeadersOptions = new ForwardedHeadersOptions
