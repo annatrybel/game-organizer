@@ -9,23 +9,30 @@ namespace GameOrganizer.Api.Services
     public class GameService : IGameService
     {
         private readonly GameOrganizerDbContext _context;
-        private readonly IWebHostEnvironment _environment; 
+        private readonly IFileService _fileService;
 
-        public GameService(GameOrganizerDbContext context, IWebHostEnvironment environment)
+        public GameService(GameOrganizerDbContext context, IFileService fileService)
         {
             _context = context;
-            _environment = environment;
+            _fileService = fileService;
         }
 
         public async Task<Game> AddGameAsync(GameDto dto, string userId)
         {
-            string coverUrl = null;           
+            string? url = null;
+
+            if (dto.Image != null)
+            {
+                url = await _fileService.UploadImageAsync(dto.Image);
+            }
 
             var game = new Game
             {
                 Title = dto.Title,
+                Description = dto.Description,
                 GenreId = dto.GenreId,
-                UserId = userId
+                UserId = userId,
+                ImageUrl = url
             };
 
             _context.Games.Add(game);
