@@ -147,6 +147,7 @@ builder.WebHost.UseSentry(options =>
 
 // Add services to the container
 builder.Services.AddScoped<RoleSeeder>();
+builder.Services.AddScoped<GenreSeeder>();
 builder.Services.AddScoped<SeedManager>();
 builder.Services.AddScoped<IAuthService, AuthService>(); 
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
@@ -154,6 +155,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IHistoryLogService, HistoryLogService>();
+builder.Services.AddScoped<IGameService, GameService>();
 
 
 
@@ -249,6 +251,7 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
+app.UseStaticFiles();
 
 app.MapHealthChecks("/healthz");
 app.MapControllers();
