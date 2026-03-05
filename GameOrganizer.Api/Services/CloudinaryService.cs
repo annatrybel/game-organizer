@@ -38,5 +38,26 @@ namespace GameOrganizer.Api.Services
 
             return uploadResult.SecureUrl.ToString();
         }
+
+        public async Task<bool> DeleteImageAsync(string? imageUrl)
+        {
+            if (string.IsNullOrEmpty(imageUrl)) return true;
+
+            try
+            {
+                var uri = new Uri(imageUrl);
+                var segments = uri.AbsolutePath.Split('/');
+                var fileNameWithExtension = segments.Last();
+                var publicId = Path.GetFileNameWithoutExtension(fileNameWithExtension);
+                var deletionParams = new DeletionParams(publicId);
+                var result = await _cloudinary.DestroyAsync(deletionParams);
+
+                return result.Result == "ok";
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }

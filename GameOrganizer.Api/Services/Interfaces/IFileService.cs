@@ -3,6 +3,6 @@
     public interface IFileService
     {
         Task<string?> UploadImageAsync(IFormFile file);
-        // Task DeleteImageAsync(string publicId); 
+        Task<bool> DeleteImageAsync(string? imageUrl);
     }
 }
