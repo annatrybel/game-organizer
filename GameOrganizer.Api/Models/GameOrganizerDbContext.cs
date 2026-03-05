@@ -30,17 +30,24 @@ namespace GameOrganizer.Api.Models
 
        
         public DbSet<HistoryLog> HistoryLogs { get; set; }
-        
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<Game> Games { get; set; }
+        public DbSet<Genre> Genres { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            //modelBuilder.Entity<UserDto>().HasNoKey().ToView("UserWithRoles");
-            
+            modelBuilder.Entity<UserDto>().HasNoKey().ToView("UserWithRoles");
+
             modelBuilder.Entity<HistoryLog>()
                 .Property(h => h.CreationDate)
-                .HasColumnType("timestamp with time zone");           
+                .HasColumnType("timestamp with time zone");
+
+            modelBuilder.Entity<ChatMessage>()
+               .Property(h => h.Timestamp)
+               .HasColumnType("timestamp with time zone");
         }
 
         private async Task<IdentityUser?> GetIdentityUser()
