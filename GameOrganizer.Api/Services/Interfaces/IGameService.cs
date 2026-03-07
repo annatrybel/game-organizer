@@ -8,6 +8,9 @@ namespace GameOrganizer.Api.Services.Interfaces
     {
         Task<Game> AddGameAsync(GameDto dto, string userId);
         Task<IEnumerable<Game>> GetMyGamesAsync(string userId);
+        Task<Game?> UpdateGameAsync(GameDto dto, string userId);
+        Task<bool> DeleteGameAsync(int gameId, string userId);
+
         Task<IEnumerable<Genre>> GetAllGenresAsync();
     }
 }

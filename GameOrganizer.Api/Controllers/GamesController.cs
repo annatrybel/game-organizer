@@ -60,5 +60,43 @@ namespace GameOrganizer.Api.Controllers
             var genres = await _gameService.GetAllGenresAsync();
             return Ok(genres);
         }
+
+        /// <summary>
+        /// Edytuje istniejącą grę użytkownika.
+        /// </summary>
+        /// <param name="id">ID gry do edycji.</param>
+        /// <param name="dto">Nowe dane gry (jeśli Image jest puste, zachowane zostanie stare zdjęcie).</param>
+        [HttpPut("update-game")]
+        [Consumes("multipart/form-data")]
+        [ProducesResponseType(typeof(Game), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Update([FromForm] GameDto dto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var updatedGame = await _gameService.UpdateGameAsync(dto, userId);
+
+            if (updatedGame == null)
+                return NotFound(new { message = "Nie znaleziono gry lub nie masz uprawnień." });
+
+            return Ok(updatedGame);
+        }
+
+        /// <summary>
+        /// Usuwa grę z kolekcji użytkownika.
+        /// </summary>
+        /// <param name="id">ID gry do usunięcia.</param>
+        [HttpDelete("delete-game/{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var success = await _gameService.DeleteGameAsync(id, userId);
+
+            if (!success)
+                return NotFound(new { message = "Nie znaleziono gry lub nie masz uprawnień." });
+
+            return Ok(new { message = "Gra została pomyślnie usunięta." });
+        }
     }
 }

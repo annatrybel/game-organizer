@@ -102,12 +102,7 @@ builder.Services.AddAuthentication(options =>
             return Task.CompletedTask;
         }
     };
-})
-.AddFacebook(options =>
-{
-    options.AppId = builder.Configuration["Authentication:Facebook:AppId"];
-    options.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
-}); ;
+});
 
 
 var frontendUrl = builder.Configuration["FRONTEND_BASE_URL"] ?? "http://localhost:3000";
@@ -147,6 +142,7 @@ builder.WebHost.UseSentry(options =>
 
 // Add services to the container
 builder.Services.AddScoped<RoleSeeder>();
+builder.Services.AddScoped<GenreSeeder>();
 builder.Services.AddScoped<SeedManager>();
 builder.Services.AddScoped<IAuthService, AuthService>(); 
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
@@ -154,7 +150,8 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IHistoryLogService, HistoryLogService>();
-
+builder.Services.AddScoped<IGameService, GameService>();
+builder.Services.AddScoped<IFileService, CloudinaryService>();
 
 
 builder.Services.AddControllers();
@@ -249,6 +246,7 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
+app.UseStaticFiles();
 
 app.MapHealthChecks("/healthz");
 app.MapControllers();

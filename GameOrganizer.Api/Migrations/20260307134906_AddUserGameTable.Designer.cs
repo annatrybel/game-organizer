@@ -3,6 +3,7 @@ using System;
 using GameOrganizer.Api.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GameOrganizer.Api.Migrations
 {
     [DbContext(typeof(GameOrganizerDbContext))]
-    partial class GameOrganizerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260307134906_AddUserGameTable")]
+    partial class AddUserGameTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -164,6 +167,33 @@ namespace GameOrganizer.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("HistoryLogs");
+                });
+
+            modelBuilder.Entity("GameOrganizer.Api.Models.DatabaseModels.UserGame", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AddedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("GameId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserGames");
                 });
 
             modelBuilder.Entity("GameOrganizer.Api.Models.Dto.UserDto", b =>
@@ -435,6 +465,25 @@ namespace GameOrganizer.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Genre");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("GameOrganizer.Api.Models.DatabaseModels.UserGame", b =>
+                {
+                    b.HasOne("GameOrganizer.Api.Models.DatabaseModels.Game", "Game")
+                        .WithMany()
+                        .HasForeignKey("GameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Game");
 
                     b.Navigation("User");
                 });
