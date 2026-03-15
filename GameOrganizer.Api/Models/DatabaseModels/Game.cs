@@ -12,5 +12,7 @@ namespace GameOrganizer.Api.Models.DatabaseModels
         public string? ImageUrl { get; set; }
         public bool IsAccepted { get; set; } 
         public string? SuggestedByUserId { get; set; }
+        public int PlatformId { get; set; }
+        public Platform Platform { get; set; } = null!;
     }
 }

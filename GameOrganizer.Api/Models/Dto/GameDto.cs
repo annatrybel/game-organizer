@@ -16,6 +16,10 @@ namespace GameOrganizer.Api.Models.Dto
         [Required(ErrorMessage = "Gatunek jest wymagany.")]
         [Range(1, int.MaxValue, ErrorMessage = "Wybrany gatunek jest nieprawidłowy.")]
         public int GenreId { get; set; }
+
+        [Required(ErrorMessage = "Platforma jest wymagana.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Wybrana platforma jest nieprawidłowa.")]
+        public int PlatformId { get; set; }
         public IFormFile? Image { get; set; }
     }
 }
