@@ -113,6 +113,21 @@ namespace GameOrganizer.Api.Controllers
             var result = await _gameService.GetAllGenresAsync();
             return HandleServiceResult(result);
         }
+
+        /// <summary>
+        /// Pobiera listę wszystkich dostępnych platform zdefiniowanych w systemie.
+        /// </summary>
+        /// <returns>Lista platform.</returns>
+        [HttpGet("platforms")]
+        [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetAllPlatforms()
+        {
+            var result = await _gameService.GetAllPlatformsAsync();
+            return HandleServiceResult(result);
+        }
+
+        
         /// <summary>
         /// Aktualizuje dane istniejącej gry w głównej bibliotece (dostępne tylko dla administratorów).
         /// </summary>

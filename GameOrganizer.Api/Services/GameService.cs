@@ -54,7 +54,10 @@ namespace GameOrganizer.Api.Services
 
             var genreExists = await _context.Genres.AnyAsync(g => g.Id == dto.GenreId);
             if (!genreExists)
-                return ServiceResult<Game>.Failure(CommonErrors.NotFound("Genre", dto.GenreId));
+                return ServiceResult<Game>.Failure(CommonErrors.NotFound("Gatunek", dto.GenreId));
+
+            if (!await _context.Platforms.AnyAsync(p => p.Id == dto.PlatformId)) 
+                return ServiceResult<Game>.Failure(CommonErrors.NotFound("Platforma", dto.PlatformId));
 
             string? url = dto.Image != null ? await _fileService.UploadImageAsync(dto.Image) : null;
 
@@ -63,6 +66,7 @@ namespace GameOrganizer.Api.Services
                 Title = dto.Title,
                 Description = dto.Description,
                 GenreId = dto.GenreId,
+                PlatformId = dto.PlatformId,
                 ImageUrl = url,
                 IsAccepted = false, 
                 SuggestedByUserId = userId
@@ -88,7 +92,7 @@ namespace GameOrganizer.Api.Services
         {
             try
             {
-                string[] columnNames = { "Title", "Genre.Name", "Description" };
+                string[] columnNames = { "Title", "Genre.Name", "Platform.Name", "Description" };
 
                 string sortColumn = (request.OrderColumn >= 0 && request.OrderColumn < columnNames.Length)
                     ? columnNames[request.OrderColumn]
@@ -96,18 +100,19 @@ namespace GameOrganizer.Api.Services
 
                 var baseQuery = _context.Games
                     .Include(g => g.Genre)
+                    .Include(g => g.Platform)
                     .Where(g => g.IsAccepted)
                     .AsQueryable();
 
                 var totalRecords = await baseQuery.CountAsync();
-
                 if (!string.IsNullOrEmpty(request.SearchValue))
                 {
                     string searchValueLower = request.SearchValue.ToLower();
                     baseQuery = baseQuery.Where(g =>
                         g.Title.ToLower().Contains(searchValueLower) ||
                         (g.Description != null && g.Description.ToLower().Contains(searchValueLower)) ||
-                        g.Genre.Name.ToLower().Contains(searchValueLower));
+                        g.Genre.Name.ToLower().Contains(searchValueLower) ||
+                        g.Platform.Name.ToLower().Contains(searchValueLower)); 
                 }
 
                 var recordsFiltered = await baseQuery.CountAsync();
@@ -155,6 +160,9 @@ namespace GameOrganizer.Api.Services
             if (!genreExists)
                 return ServiceResult<Game>.Failure(CommonErrors.NotFound("Gatunek", dto.GenreId));
 
+            if (!await _context.Platforms.AnyAsync(p => p.Id == dto.PlatformId)) 
+                return ServiceResult<Game>.Failure(CommonErrors.NotFound("Platforma", dto.PlatformId));
+
             string? url = dto.Image != null ? await _fileService.UploadImageAsync(dto.Image) : null;
 
             var game = new Game
@@ -175,7 +183,7 @@ namespace GameOrganizer.Api.Services
         {
             try
             {
-                string[] columnNames = { "Title", "Genre.Name", "Description" };
+                string[] columnNames = { "Title", "Genre.Name", "Platform.Name", "Description" };
 
                 string sortColumn = (request.OrderColumn >= 0 && request.OrderColumn < columnNames.Length)
                     ? columnNames[request.OrderColumn]
@@ -184,9 +192,9 @@ namespace GameOrganizer.Api.Services
                 var baseQuery = _context.UserGames
                     .Where(ug => ug.UserId == userId)
                     .Include(ug => ug.Game)
-                    .ThenInclude(g => g.Genre)
-                    .ThenInclude(g => g.Genre)
-                    .Include(ug => ug.Platform)
+                        .ThenInclude(g => g.Genre)
+                    .Include(ug => ug.Game)
+                        .ThenInclude(g => g.Platform)
                     .Select(ug => ug.Game); 
 
                 var totalRecords = await baseQuery.CountAsync();
@@ -197,7 +205,8 @@ namespace GameOrganizer.Api.Services
                     baseQuery = baseQuery.Where(g =>
                         g.Title.ToLower().Contains(searchValueLower) ||
                         (g.Description != null && g.Description.ToLower().Contains(searchValueLower)) ||
-                        g.Genre.Name.ToLower().Contains(searchValueLower));
+                        g.Genre.Name.ToLower().Contains(searchValueLower) ||
+                        g.Platform.Name.ToLower().Contains(searchValueLower)); 
                 }
 
                 var recordsFiltered = await baseQuery.CountAsync();
@@ -230,10 +239,17 @@ namespace GameOrganizer.Api.Services
         {
             var game = await _context.Games.FindAsync(dto.Id);
             if (game == null) ServiceResult.Failure(CommonErrors.NotFound(ObjectName, dto.Id));
+                        
+            if (!await _context.Genres.AnyAsync(g => g.Id == dto.GenreId))
+                return ServiceResult<Game>.Failure(CommonErrors.NotFound("Gatunek", dto.GenreId));
+
+            if (!await _context.Platforms.AnyAsync(p => p.Id == dto.PlatformId)) 
+                return ServiceResult<Game>.Failure(CommonErrors.NotFound("Platforma", dto.PlatformId));
 
             game.Title = dto.Title;
             game.Description = dto.Description;
             game.GenreId = dto.GenreId;
+            game.PlatformId = dto.PlatformId;
 
             if (dto.Image != null)
             {
@@ -283,6 +299,11 @@ namespace GameOrganizer.Api.Services
             await _context.SaveChangesAsync();
 
             return ServiceResult.Success();
+        }
+        public async Task<ServiceResult<IEnumerable<Platform>>> GetAllPlatformsAsync()
+        {
+            var platforms = await _context.Platforms.OrderBy(p => p.Name).ToListAsync();
+            return ServiceResult<IEnumerable<Platform>>.Success(platforms);
         }
     }
 }
