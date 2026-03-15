@@ -172,5 +172,28 @@ namespace GameOrganizer.Api.Controllers
             var result = await _gameService.AcceptGameAsync(id);
             return HandleServiceResult(result);
         }
+
+        /// <summary>
+        /// Usuwa wybraną grę z prywatnej kolekcji zalogowanego użytkownika.
+        /// </summary>
+        /// <remarks>
+        /// Ta operacja nie usuwa gry z globalnej biblioteki, a jedynie odpina ją od konta użytkownika.
+        /// </remarks>
+        /// <param name="id">ID gry do usunięcia z kolekcji.</param>
+        /// <returns>Status operacji usuwania.</returns>
+        [HttpDelete("remove-from-collection/{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> RemoveFromCollection(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var result = await _gameService.RemoveFromCollectionAsync(id, userId);
+
+            return HandleServiceResult(result);
+        }
     }
 }

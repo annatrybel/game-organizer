@@ -266,5 +266,21 @@ namespace GameOrganizer.Api.Services
             var genres = await _context.Genres.OrderBy(g => g.Name).ToListAsync();
             return ServiceResult<IEnumerable<Genre>>.Success(genres);
         }
+
+        public async Task<ServiceResult> RemoveFromCollectionAsync(int gameId, string userId)
+        {
+            var userGame = await _context.UserGames
+                .FirstOrDefaultAsync(ug => ug.UserId == userId && ug.GameId == gameId);
+
+            if (userGame == null)
+            {
+                return ServiceResult.Failure(CommonErrors.NotFound("UserGame", gameId));
+            }
+
+            _context.UserGames.Remove(userGame);
+            await _context.SaveChangesAsync();
+
+            return ServiceResult.Success();
+        }
     }
 }

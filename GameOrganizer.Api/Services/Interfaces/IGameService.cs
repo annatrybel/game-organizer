@@ -17,5 +17,6 @@ namespace GameOrganizer.Api.Services.Interfaces
         Task<ServiceResult<DataTableResponse<Game>>> GetAvailableGamesAsync(DataTableRequest request);
         Task<ServiceResult<IEnumerable<Game>>> GetPendingAsync();
         Task<ServiceResult<IEnumerable<Genre>>> GetAllGenresAsync();
+        Task<ServiceResult> RemoveFromCollectionAsync(int gameId, string userId);
     }
 }
