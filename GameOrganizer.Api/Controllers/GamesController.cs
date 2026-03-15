@@ -3,8 +3,6 @@ using GameOrganizer.Api.Models.Dto;
 using GameOrganizer.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Sprache;
 using System.Security.Claims;
 
 namespace GameOrganizer.Api.Controllers
@@ -20,10 +18,13 @@ namespace GameOrganizer.Api.Controllers
         public GamesController(IGameService gameService) => _gameService = gameService;
 
         /// <summary>
-        /// Tworzy nową grę i przypisuje ją do zalogowanego użytkownika.
+        /// Dodaje nową grę bezpośrednio do ogólnodostępnej biblioteki gier.
         /// </summary>
-        /// <param name="dto">Dane gry wraz z opcjonalnym plikiem okładki.</param>
-        /// <returns>Zwraca utworzony obiekt gry.</returns>
+        /// <remarks>
+        /// Metoda dostępna wyłącznie dla administratorów. Gra jest automatycznie zatwierdzana i staje się widoczna dla wszystkich użytkowników.
+        /// </remarks>
+        /// <param name="dto">Dane gry wraz z opcjonalnym plikiem obrazu okładki.</param>
+        /// <returns>Obiekt nowo utworzonej gry.</returns>v
         [Authorize(Roles = "Administrator")]
         [HttpPost("create-game")]
         [Consumes("multipart/form-data")] 
@@ -32,21 +33,20 @@ namespace GameOrganizer.Api.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromForm] GameDto dto)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var result = await _gameService.AddGameAsync(dto, userId);
+            var result = await _gameService.AddGameAsync(dto);
             return HandleServiceResult(result);
         }
 
         /// <summary>
-        /// Pobiera listę wszystkich zaakceptowanych gier dostępnych w globalnej bibliotece.
+        /// Pobiera listę gier dostępnych w globalnej bibliotece (DataTable - stronicowanie, wyszukiwanie, sortowanie).
         /// </summary>
-        /// <returns>Lista zaakceptowanych gier.</returns>
-        [HttpGet("available")]
-        [ProducesResponseType(typeof(IEnumerable<Game>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> GetAvailable()
+        /// <param name="request">Parametry zapytania DataTable.</param>
+        /// <returns>Strona danych dla tabeli.</returns>
+        [HttpPost("available-table")]
+        [ProducesResponseType(typeof(DataTableResponse<Game>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAvailableTable([FromBody] DataTableRequest request)
         {
-            var result = await _gameService.GetAvailableGamesAsync();
+            var result = await _gameService.GetAvailableGamesAsync(request);
             return HandleServiceResult(result);
         }
 
@@ -83,16 +83,21 @@ namespace GameOrganizer.Api.Controllers
         }
 
         /// <summary>
-        /// Pobiera listę gier należących do zalogowanego użytkownika.
+        /// Pobiera listę gier znajdujących się w kolekcji użytkownika (DataTable - stronicowanie, wyszukiwanie, sortowanie).
         /// </summary>
-        /// <returns>Lista gier.</returns>
-        [HttpGet("my-collection")]
-        [ProducesResponseType(typeof(IEnumerable<Game>), StatusCodes.Status200OK)]
+        /// <param name="request">Parametry zapytania DataTable.</param>
+        /// <returns>Strona gier użytkownika.</returns>
+        [HttpPost("my-collection")]
+        [ProducesResponseType(typeof(DataTableResponse<Game>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> GetMyGames()
+        public async Task<IActionResult> GetMyGames([FromBody] DataTableRequest request)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var result = await _gameService.GetMyGamesAsync(userId);
+
+            // Obsługa braku ID użytkownika w claimach
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var result = await _gameService.GetMyGamesAsync(userId, request);
             return HandleServiceResult(result);
         }
 
