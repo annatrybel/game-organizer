@@ -185,6 +185,8 @@ namespace GameOrganizer.Api.Services
                     .Where(ug => ug.UserId == userId)
                     .Include(ug => ug.Game)
                     .ThenInclude(g => g.Genre)
+                    .ThenInclude(g => g.Genre)
+                    .Include(ug => ug.Platform)
                     .Select(ug => ug.Game); 
 
                 var totalRecords = await baseQuery.CountAsync();
