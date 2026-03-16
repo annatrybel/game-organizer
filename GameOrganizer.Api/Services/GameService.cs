@@ -170,6 +170,7 @@ namespace GameOrganizer.Api.Services
                 Title = dto.Title,
                 Description = dto.Description,
                 GenreId = dto.GenreId,
+                PlatformId = dto.PlatformId,
                 ImageUrl = url,
                 IsAccepted = true
             };
