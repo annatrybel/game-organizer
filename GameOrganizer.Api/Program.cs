@@ -102,6 +102,11 @@ builder.Services.AddAuthentication(options =>
             return Task.CompletedTask;
         }
     };
+})
+.AddGoogle(options =>
+{
+    options.ClientId = builder.Configuration["GOOGLE_CLIENT_ID"];
+    options.ClientSecret = builder.Configuration["GOOGLE_CLIENT_SECRET"];
 });
 
 
@@ -143,6 +148,7 @@ builder.WebHost.UseSentry(options =>
 // Add services to the container
 builder.Services.AddScoped<RoleSeeder>();
 builder.Services.AddScoped<GenreSeeder>();
+builder.Services.AddScoped<PlatformSeeder>();
 builder.Services.AddScoped<GameSeeder>();
 builder.Services.AddScoped<SeedManager>();
 builder.Services.AddScoped<IAuthService, AuthService>(); 

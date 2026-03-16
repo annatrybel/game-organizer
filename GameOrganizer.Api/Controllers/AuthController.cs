@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Sprache;
+using System.Net;
 
 namespace GameOrganizer.Api.Controllers
 {
@@ -15,11 +16,13 @@ namespace GameOrganizer.Api.Controllers
     {
         private readonly IAuthService _authService;
         private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IAuthService authService, SignInManager<IdentityUser> signInManager)
+        public AuthController(IAuthService authService, IConfiguration configuration, SignInManager<IdentityUser> signInManager)
         {
             _authService = authService;
             _signInManager = signInManager;
+            _configuration = configuration;
         }
 
         /// <summary>
@@ -98,42 +101,41 @@ namespace GameOrganizer.Api.Controllers
         /// <remarks>
         /// Endpoint przekierowuje użytkownika na stronę logowania wybranego dostawcy
         /// </remarks>
-        /// <param name="provider">Nazwa dostawcy (domyślnie "Facebook").</param>
+        /// <param name="provider">Nazwa dostawcy (domyślnie "Google").</param>
         /// <param name="returnUrl">Opcjonalny URL powrotny po zalogowaniu.</param>
         /// 
         [HttpGet("external-login")]  //http://localhost:7128/api/authentication/external-login
         [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status302Found)]
-        public IActionResult ExternalLogin(string provider = "Facebook", string returnUrl = null)
+        public IActionResult ExternalLogin(string provider = "Google", string returnUrl = null)
         {
-            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Auth", new { ReturnUrl = returnUrl });
+            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), null, new { returnUrl });
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
             return new ChallengeResult(provider, properties);
         }
         /// <summary>
         /// Callback obsługujący powrót użytkownika od zewnętrznego dostawcy.
         /// </summary>
-        /// <remarks>
-        /// Ten endpoint jest wywoływany automatycznie przez zewnętrznego providera. 
-        /// Przetwarza dane logowania, tworzy konto (jeśli nie istnieje) i przekierowuje do Frontendu z tokenem JWT w parametrze URL.
-        /// </remarks>
-        /// <param name="returnUrl">URL, na który ma nastąpić przekierowanie (z tokenem).</param>
         [HttpGet("external-login-callback")]
         [AllowAnonymous]
-        [ProducesResponseType(StatusCodes.Status302Found)]
-        public async Task<IActionResult> ExternalLoginCallback([FromQuery] string returnUrl = null)
+        public async Task<IActionResult> ExternalLoginCallback(string returnUrl = null, string remoteError = null)
         {
-            var result = await _authService.HandleExternalLoginAsync();
-
-            if (result == null || string.IsNullOrEmpty(result.Data?.Token))
+            if (remoteError != null)
             {
-                var errorUrl = returnUrl ?? "http://localhost:3000/login"; 
-                return Redirect($"{errorUrl}?error=auth_failed");
+                return Redirect($"{_configuration["FRONTEND_BASE_URL"]}/login?error={WebUtility.UrlEncode(remoteError)}");
             }
 
-            var token = result.Data.Token;
-            var successUrl = $"{returnUrl}?token={token}";
-            return Redirect(successUrl);
+            var result = await _authService.HandleExternalLoginAsync();
+
+            var frontendUrl = _configuration["FRONTEND_BASE_URL"] ?? "http://localhost:3000";
+
+            if (!result.IsSuccess)
+            {
+                return Redirect($"{frontendUrl}/login?error={WebUtility.UrlEncode(result.Error.Description)}");
+            }
+
+            // Przesyłamy token w URL (SPA go odczyta i zapisze w localStorage)
+            return Redirect($"{frontendUrl}/login-success?token={result.Data.Token}");
         }
 
         /// <summary>
