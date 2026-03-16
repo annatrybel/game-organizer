@@ -143,6 +143,7 @@ builder.WebHost.UseSentry(options =>
 // Add services to the container
 builder.Services.AddScoped<RoleSeeder>();
 builder.Services.AddScoped<GenreSeeder>();
+builder.Services.AddScoped<GameSeeder>();
 builder.Services.AddScoped<SeedManager>();
 builder.Services.AddScoped<IAuthService, AuthService>(); 
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();

@@ -8,9 +8,11 @@ namespace GameOrganizer.Api.Models.DatabaseModels
         public string Title { get; set; }
         public string? Description { get; set; }
         public int GenreId { get; set; }
-        public Genre Genre { get; set; }
-        public string UserId { get; set; }
-        public IdentityUser User { get; set; }
+        public Genre Genre { get; set; }        
         public string? ImageUrl { get; set; }
+        public bool IsAccepted { get; set; } 
+        public string? SuggestedByUserId { get; set; }
+        public int PlatformId { get; set; }
+        public Platform Platform { get; set; } = null!;
     }
 }
