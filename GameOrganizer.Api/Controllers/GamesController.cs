@@ -189,6 +189,19 @@ namespace GameOrganizer.Api.Controllers
         }
 
         /// <summary>
+        /// Odrzuca propozycję dodania nowej gry (dostępne tylko dla administratorów).
+        /// </summary>
+        /// <param name="id">ID gry do odrzucenia.</param>
+        /// <param name="reason">Opcjonalny powód odrzucenia.</param>
+        [Authorize(Roles = "Administrator")]
+        [HttpDelete("reject-proposal/{id}")]
+        public async Task<IActionResult> RejectProposal(int id, [FromQuery] string? reason)
+        {
+            var result = await _gameService.RejectGameAsync(id, reason);
+            return HandleServiceResult(result);
+        }
+
+        /// <summary>
         /// Usuwa wybraną grę z prywatnej kolekcji zalogowanego użytkownika.
         /// </summary>
         /// <remarks>

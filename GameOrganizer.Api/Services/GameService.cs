@@ -42,7 +42,7 @@ namespace GameOrganizer.Api.Services
 
             if (existingGame != null)
             {
-                if (existingGame.IsAccepted)
+                if (existingGame.Status == GameStatus.Accepted)
                 {
                     return ServiceResult<Game>.Failure(GameErrors.GameAlreadyExists(dto.Title));
                 }
@@ -68,7 +68,7 @@ namespace GameOrganizer.Api.Services
                 GenreId = dto.GenreId,
                 PlatformId = dto.PlatformId,
                 ImageUrl = url,
-                IsAccepted = false, 
+                Status = GameStatus.Pending,
                 SuggestedByUserId = userId
             };
 
@@ -83,7 +83,29 @@ namespace GameOrganizer.Api.Services
             var game = await _context.Games.FindAsync(gameId);
             if (game == null) ServiceResult.Failure(CommonErrors.NotFound(ObjectName, gameId));
 
-            game.IsAccepted = true;
+            game.Status = GameStatus.Accepted;
+            await _context.SaveChangesAsync();
+            return ServiceResult.Success();
+        }
+
+
+        public async Task<ServiceResult> RejectGameAsync(int gameId, string? reason)
+        {
+            var game = await _context.Games.FindAsync(gameId);
+            if (game == null) return ServiceResult.Failure(CommonErrors.NotFound(ObjectName, gameId));
+
+            if (game.Status == GameStatus.Accepted)
+                return ServiceResult.Failure(new ServiceError("Game.Error", "Nie można odrzucić już zaakceptowanej gry."));
+
+            game.Status = GameStatus.Rejected;
+            game.RejectionReason = reason;
+
+            //if (!string.IsNullOrEmpty(game.ImageUrl) && game.ImageUrl.Contains("cloudinary.com"))
+            //{
+            //    await _fileService.DeleteImageAsync(game.ImageUrl);
+            //    game.ImageUrl = null;
+            //}
+
             await _context.SaveChangesAsync();
             return ServiceResult.Success();
         }
@@ -101,7 +123,7 @@ namespace GameOrganizer.Api.Services
                 var baseQuery = _context.Games
                     .Include(g => g.Genre)
                     .Include(g => g.Platform)
-                    .Where(g => g.IsAccepted)
+                    .Where(g => g.Status == GameStatus.Accepted)
                     .AsQueryable();
 
                 var totalRecords = await baseQuery.CountAsync();
@@ -145,7 +167,7 @@ namespace GameOrganizer.Api.Services
         {
             var pending = await _context.Games
                 .Include(g => g.Genre)
-                .Where(g => !g.IsAccepted)
+                .Where(g => g.Status == GameStatus.Pending)
                 .ToListAsync();
             return ServiceResult<IEnumerable<Game>>.Success(pending);
         }
@@ -172,7 +194,7 @@ namespace GameOrganizer.Api.Services
                 GenreId = dto.GenreId,
                 PlatformId = dto.PlatformId,
                 ImageUrl = url,
-                IsAccepted = true
+                Status = GameStatus.Accepted
             };
 
             _context.Games.Add(game);
