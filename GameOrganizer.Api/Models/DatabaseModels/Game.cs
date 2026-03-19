@@ -1,7 +1,14 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
 namespace GameOrganizer.Api.Models.DatabaseModels
-{    
+{
+    public enum GameStatus
+    {
+        Pending = 0,  
+        Accepted = 1,  
+        Rejected = 2   
+    }
+
     public class Game
     {
         public int Id { get; set; }
@@ -10,9 +17,10 @@ namespace GameOrganizer.Api.Models.DatabaseModels
         public int GenreId { get; set; }
         public Genre Genre { get; set; }        
         public string? ImageUrl { get; set; }
-        public bool IsAccepted { get; set; } 
+        public GameStatus Status { get; set; } = GameStatus.Pending;
         public string? SuggestedByUserId { get; set; }
         public int PlatformId { get; set; }
         public Platform Platform { get; set; } = null!;
+        public string? RejectionReason { get; set; }
     }
 }

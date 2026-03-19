@@ -35,6 +35,7 @@ namespace GameOrganizer.Api.Models
         public DbSet<UserGame> UserGames { get; set; }
         public DbSet<Genre> Genres { get; set; }
         public DbSet<Platform> Platforms { get; set; }
+        public DbSet<Collection> Collections { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

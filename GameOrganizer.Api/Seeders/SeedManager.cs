@@ -19,8 +19,8 @@
         {
             await _roleSeeder.SeedRolesAsync();
             await _genreSeeder.SeedGenresAsync();
-            await _gameSeeder.SeedGamesAsync();
             await _platformSeeder.SeedPlatformsAsync();
+            await _gameSeeder.SeedGamesAsync();           
         }
     }
 }

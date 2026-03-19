@@ -3,6 +3,7 @@ using System;
 using GameOrganizer.Api.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GameOrganizer.Api.Migrations
 {
     [DbContext(typeof(GameOrganizerDbContext))]
-    partial class GameOrganizerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260317164947_UpdateGameStatusToEnum")]
+    partial class UpdateGameStatusToEnum
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -73,35 +76,6 @@ namespace GameOrganizer.Api.Migrations
                     b.HasIndex("SenderId");
 
                     b.ToTable("ChatMessages");
-                });
-
-            modelBuilder.Entity("GameOrganizer.Api.Models.DatabaseModels.Collection", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("IsPublic")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("ShareCode")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Collections");
                 });
 
             modelBuilder.Entity("GameOrganizer.Api.Models.DatabaseModels.Game", b =>
@@ -231,9 +205,6 @@ namespace GameOrganizer.Api.Migrations
                     b.Property<DateTime>("AddedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("CollectionId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("GameId")
                         .HasColumnType("integer");
 
@@ -242,8 +213,6 @@ namespace GameOrganizer.Api.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CollectionId");
 
                     b.HasIndex("GameId");
 
@@ -506,17 +475,6 @@ namespace GameOrganizer.Api.Migrations
                     b.Navigation("Sender");
                 });
 
-            modelBuilder.Entity("GameOrganizer.Api.Models.DatabaseModels.Collection", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("GameOrganizer.Api.Models.DatabaseModels.Game", b =>
                 {
                     b.HasOne("GameOrganizer.Api.Models.DatabaseModels.Genre", "Genre")
@@ -538,12 +496,6 @@ namespace GameOrganizer.Api.Migrations
 
             modelBuilder.Entity("GameOrganizer.Api.Models.DatabaseModels.UserGame", b =>
                 {
-                    b.HasOne("GameOrganizer.Api.Models.DatabaseModels.Collection", "Collection")
-                        .WithMany("UserGames")
-                        .HasForeignKey("CollectionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("GameOrganizer.Api.Models.DatabaseModels.Game", "Game")
                         .WithMany()
                         .HasForeignKey("GameId")
@@ -555,8 +507,6 @@ namespace GameOrganizer.Api.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Collection");
 
                     b.Navigation("Game");
 
@@ -626,11 +576,6 @@ namespace GameOrganizer.Api.Migrations
                     b.Navigation("Members");
 
                     b.Navigation("Messages");
-                });
-
-            modelBuilder.Entity("GameOrganizer.Api.Models.DatabaseModels.Collection", b =>
-                {
-                    b.Navigation("UserGames");
                 });
 #pragma warning restore 612, 618
         }
