@@ -159,6 +159,7 @@ builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IHistoryLogService, HistoryLogService>();
 builder.Services.AddScoped<IGameService, GameService>();
 builder.Services.AddScoped<IFileService, CloudinaryService>();
+builder.Services.AddScoped<ICollectionService, CollectionService>();
 
 
 builder.Services.AddControllers();

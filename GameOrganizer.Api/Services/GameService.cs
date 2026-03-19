@@ -21,16 +21,44 @@ namespace GameOrganizer.Api.Services
             _fileService = fileService;
         }
 
-        public async Task<ServiceResult> AddToUserCollectionAsync(int gameId, string userId)
-        {
-            var alreadyHas = await _context.UserGames.AnyAsync(ug => ug.GameId == gameId && ug.UserId == userId);
-            if (alreadyHas) return ServiceResult.Failure(GameErrors.GameAlreadyInCollection());
+        public async Task<ServiceResult> AddToUserCollectionAsync(int gameId, int collectionId, string userId)
+        {            
 
             var gameExists = await _context.Games.AnyAsync(g => g.Id == gameId);
             if (!gameExists) ServiceResult.Failure(CommonErrors.NotFound(ObjectName, gameId));
 
-            var userGame = new UserGame { GameId = gameId, UserId = userId };
+            var collection = await _context.Collections
+                .FirstOrDefaultAsync(c => c.Id == collectionId && c.UserId == userId);
+
+            if (collection == null)
+                return ServiceResult.Failure(CommonErrors.NotFound("Collection", collectionId));
+
+            var alreadyHas = await _context.UserGames.AnyAsync(ug => ug.GameId == gameId && ug.UserId == userId);
+            if (alreadyHas) return ServiceResult.Failure(GameErrors.GameAlreadyInCollection());
+
+            var userGame = new UserGame
+            {
+                GameId = gameId,
+                UserId = userId,
+                CollectionId = collectionId
+            };
+
             _context.UserGames.Add(userGame);
+            await _context.SaveChangesAsync();
+            return ServiceResult.Success();
+        }
+
+        public async Task<ServiceResult> MoveGameAsync(int gameId, int currentCollectionId, int targetCollectionId, string userId)
+        {
+            var userGame = await _context.UserGames
+                .FirstOrDefaultAsync(ug => ug.GameId == gameId && ug.CollectionId == currentCollectionId && ug.UserId == userId);
+
+            if (userGame == null) return ServiceResult.Failure(CommonErrors.NotFound("GameRecord", gameId));
+
+            var targetExists = await _context.Collections.AnyAsync(c => c.Id == targetCollectionId && c.UserId == userId);
+            if (!targetExists) return ServiceResult.Failure(CommonErrors.NotFound("TargetCollection", targetCollectionId));
+
+            userGame.CollectionId = targetCollectionId;
             await _context.SaveChangesAsync();
             return ServiceResult.Success();
         }

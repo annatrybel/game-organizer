@@ -59,10 +59,10 @@ namespace GameOrganizer.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> AddToCollection(int gameId)
+        public async Task<IActionResult> AddToCollection(int gameId, int collectionId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var result = await _gameService.AddToUserCollectionAsync(gameId, userId);
+            var result = await _gameService.AddToUserCollectionAsync(gameId, collectionId, userId);
             return HandleServiceResult(result);
         }
 
@@ -98,6 +98,35 @@ namespace GameOrganizer.Api.Controllers
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             var result = await _gameService.GetMyGamesAsync(userId, request);
+            return HandleServiceResult(result);
+        }
+
+        /// <summary>
+        /// Przenosi grę pomiędzy kolekcjami (folderami) użytkownika.
+        /// </summary>
+        /// <remarks>
+        /// Metoda pozwala na zmianę przypisania gry, np. przeniesienie jej z folderu 'Planowane' do 'W trakcie'. 
+        /// Wymaga, aby obie kolekcje (źródłowa i docelowa) należały do zalogowanego użytkownika.
+        /// </remarks>
+        /// <param name="request">Model zawierający ID gry oraz identyfikatory kolekcji: obecnej i docelowej.</param>
+        /// <returns>Zwraca status 200 w przypadku powodzenia lub błąd 404, jeśli gra/kolekcja nie zostanie znaleziona.</returns>
+        [HttpPost("move-game")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> MoveGame([FromBody] MoveGameRequest request)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var result = await _gameService.MoveGameAsync(
+                request.GameId,
+                request.CurrentCollectionId,
+                request.TargetCollectionId,
+                userId
+            );
+
             return HandleServiceResult(result);
         }
 
