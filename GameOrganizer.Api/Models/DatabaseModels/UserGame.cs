@@ -9,6 +9,8 @@ namespace GameOrganizer.Api.Models.DatabaseModels
         public IdentityUser User { get; set; }
         public int GameId { get; set; }
         public Game Game { get; set; }
+        public int CollectionId { get; set; }
+        public Collection Collection { get; set; } = null!;
         public DateTime AddedAt { get; set; } = DateTime.UtcNow;
     }
 }
