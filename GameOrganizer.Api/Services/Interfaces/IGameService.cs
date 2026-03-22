@@ -8,7 +8,6 @@ namespace GameOrganizer.Api.Services.Interfaces
     public interface IGameService
     {
         Task<ServiceResult<Game>> AddGameAsync(GameDto dto);
-        Task<ServiceResult<DataTableResponse<Game>>> GetMyGamesAsync(string userId, DataTableRequest request);
         Task<ServiceResult<Game>> UpdateGameAsync(GameDto dto);
         Task<ServiceResult> DeleteGameAsync(int gameId);
         Task<ServiceResult> AddToUserCollectionAsync(int gameId, int collectionId, string userId);

@@ -15,6 +15,7 @@ namespace GameOrganizer.Api.Services
     public class AuthService : IAuthService
     {
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly ICollectionService _collectionService;
         private readonly ILogger<AuthService> _logger;
         private readonly IConfiguration _configuration;
         private readonly SignInManager<IdentityUser> _signInManager;
@@ -23,9 +24,11 @@ namespace GameOrganizer.Api.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private const string ObjectName = "User";
 
-        public AuthService(UserManager<IdentityUser> userManager, ILogger<AuthService> logger, IConfiguration configuration, SignInManager<IdentityUser> signInManager, IWebHostEnvironment hostingEnvironment, IEmailSender emailSender, IHttpContextAccessor httpContextAccessor)
+        public AuthService(UserManager<IdentityUser> userManager,
+        ICollectionService collectionService, ILogger<AuthService> logger, IConfiguration configuration, SignInManager<IdentityUser> signInManager, IWebHostEnvironment hostingEnvironment, IEmailSender emailSender, IHttpContextAccessor httpContextAccessor)
         {
             _userManager = userManager;
+            _collectionService = collectionService;
             _logger = logger;
             _configuration = configuration;
             _signInManager = signInManager;
@@ -76,7 +79,9 @@ namespace GameOrganizer.Api.Services
                     await _userManager.AddToRoleAsync(user, "User");
                     _logger.LogInformation("Użytkownik utworzony z rolą User.");
                 }
-                _logger.LogInformation("User created a new account with password.");
+                await _collectionService.InitDefaultCollectionsAsync(user.Id);
+
+                _logger.LogInformation("User created a new account with password and default collections.");
             }
             else
             {
@@ -281,6 +286,7 @@ namespace GameOrganizer.Api.Services
                         await _userManager.AddToRoleAsync(user, "User");
                         _logger.LogInformation("Nowy użytkownik (zewnętrzny) otrzymał rolę User.");
                     }
+                    await _collectionService.InitDefaultCollectionsAsync(user.Id);
                 }
 
                 var addLoginResult = await _userManager.AddLoginAsync(user, info);
