@@ -3,6 +3,7 @@ using System;
 using GameOrganizer.Api.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GameOrganizer.Api.Migrations
 {
     [DbContext(typeof(GameOrganizerDbContext))]
-    partial class GameOrganizerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260319174843_AddCascadeDeleteToCollections")]
+    partial class AddCascadeDeleteToCollections
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -280,48 +283,6 @@ namespace GameOrganizer.Api.Migrations
                     b.ToTable((string)null);
 
                     b.ToView("UserWithRoles", (string)null);
-                });
-
-            modelBuilder.Entity("GameOrganizer.Api.Models.View.UserGamesView", b =>
-                {
-                    b.Property<DateTime>("AddedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("CollectionId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("CollectionName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<int>("GameId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("GenreName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("PlatformName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("UserGameId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("UserGamesView", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

@@ -1,12 +1,13 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using GameOrganizer.Api.Models.DatabaseModels;
+using GameOrganizer.Api.Models.Dto;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Migrations;
 using System.Security.Claims;
 using System.Text.Json;
-using GameOrganizer.Api.Models.DatabaseModels;
-using GameOrganizer.Api.Models.Dto;
+using GameOrganizer.Api.Models.View;
 
 namespace GameOrganizer.Api.Models
 {
@@ -36,6 +37,7 @@ namespace GameOrganizer.Api.Models
         public DbSet<Genre> Genres { get; set; }
         public DbSet<Platform> Platforms { get; set; }
         public DbSet<Collection> Collections { get; set; }
+        public DbSet<UserGamesView> UserGamesView { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -51,6 +53,28 @@ namespace GameOrganizer.Api.Models
             modelBuilder.Entity<ChatMessage>()
                .Property(h => h.Timestamp)
                .HasColumnType("timestamp with time zone");
+
+            modelBuilder.Entity<UserGame>()  //User usuwa folder -> znikają wpisy gier w tym folderze
+                .HasOne(ug => ug.Collection)
+                .WithMany(c => c.UserGames)
+                .HasForeignKey(ug => ug.CollectionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserGame>()  //Admin usuwa grę globalnie -> znika z kolekcji wszystkich userów
+                .HasOne(ug => ug.Game)
+                .WithMany() 
+                .HasForeignKey(ug => ug.GameId)
+                .OnDelete(DeleteBehavior.Cascade);
+                        
+            modelBuilder.Entity<Collection>()  //User usuwa konto->usuwają się jego kolekcje
+                .HasOne(c => c.User)
+                .WithMany() 
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserGamesView>()
+               .ToView("UserGamesView")
+               .HasNoKey();
         }
 
         private async Task<IdentityUser?> GetIdentityUser()
