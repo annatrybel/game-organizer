@@ -343,13 +343,14 @@ namespace GameOrganizer.Api.Services
                 user.UserName = dto.Username;
             }
 
+            user.Bio = dto.Bio;
+
             if (dto.Avatar != null)
             {
                 if (!string.IsNullOrEmpty(user.AvatarUrl) && user.AvatarUrl.Contains("cloudinary.com"))
                 {
                     await _fileService.DeleteImageAsync(user.AvatarUrl);
                 }
-
                 user.AvatarUrl = await _fileService.UploadImageAsync(dto.Avatar);
             }
 

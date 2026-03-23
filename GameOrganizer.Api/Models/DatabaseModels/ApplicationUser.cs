@@ -5,5 +5,6 @@ namespace GameOrganizer.Api.Models.DatabaseModels
     public class ApplicationUser : IdentityUser
     {
         public string? AvatarUrl { get; set; }
+        public string? Bio { get; set; }
     }
 }
