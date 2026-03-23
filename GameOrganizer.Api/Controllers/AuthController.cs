@@ -1,4 +1,5 @@
-﻿using GameOrganizer.Api.Models.Dto;
+﻿using GameOrganizer.Api.Models.DatabaseModels;
+using GameOrganizer.Api.Models.Dto;
 using GameOrganizer.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -15,10 +16,10 @@ namespace GameOrganizer.Api.Controllers
     public class AuthController : GameOrganizerBaseController
     {
         private readonly IAuthService _authService;
-        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IConfiguration _configuration;
 
-        public AuthController(IAuthService authService, IConfiguration configuration, SignInManager<IdentityUser> signInManager)
+        public AuthController(IAuthService authService, IConfiguration configuration, SignInManager<ApplicationUser> signInManager)
         {
             _authService = authService;
             _signInManager = signInManager;

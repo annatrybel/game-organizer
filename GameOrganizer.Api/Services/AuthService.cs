@@ -1,4 +1,5 @@
-﻿using GameOrganizer.Api.Models.Dto;
+﻿using GameOrganizer.Api.Models.DatabaseModels;
+using GameOrganizer.Api.Models.Dto;
 using GameOrganizer.Api.Services.Errors;
 using GameOrganizer.Api.Services.Interfaces;
 using GameOrganizer.Api.Services.Results;
@@ -14,18 +15,18 @@ namespace GameOrganizer.Api.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly ICollectionService _collectionService;
         private readonly ILogger<AuthService> _logger;
         private readonly IConfiguration _configuration;
-        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IWebHostEnvironment _hostingEnvironment;
         private readonly IEmailSender _emailSender;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private const string ObjectName = "User";
 
-        public AuthService(UserManager<IdentityUser> userManager,
-        ICollectionService collectionService, ILogger<AuthService> logger, IConfiguration configuration, SignInManager<IdentityUser> signInManager, IWebHostEnvironment hostingEnvironment, IEmailSender emailSender, IHttpContextAccessor httpContextAccessor)
+        public AuthService(UserManager<ApplicationUser> userManager,
+        ICollectionService collectionService, ILogger<AuthService> logger, IConfiguration configuration, SignInManager<ApplicationUser> signInManager, IWebHostEnvironment hostingEnvironment, IEmailSender emailSender, IHttpContextAccessor httpContextAccessor)
         {
             _userManager = userManager;
             _collectionService = collectionService;
@@ -56,7 +57,7 @@ namespace GameOrganizer.Api.Services
                 return ServiceResult.Failure(AuthErrors.UsernameTaken());
             }
 
-            var user = new IdentityUser
+            var user = new ApplicationUser
             {
                 Email = registerDto.Email,
                 UserName = registerDto.Username,
@@ -99,7 +100,7 @@ namespace GameOrganizer.Api.Services
                 return ServiceResult.Failure(AuthErrors.UserAlreadyExists());
             }
 
-            var user = new IdentityUser
+            var user = new ApplicationUser
             {
                 Email = registerDto.Email,
                 UserName = registerDto.Username,
@@ -141,7 +142,7 @@ namespace GameOrganizer.Api.Services
             return ServiceResult<LoginResponse>.Success(new LoginResponse(token));
         }
 
-        private async Task<string> GenerateJwtTokenAsync(IdentityUser user)
+        private async Task<string> GenerateJwtTokenAsync(ApplicationUser user)
         {
             var claims = new List<Claim>
             {
@@ -265,7 +266,7 @@ namespace GameOrganizer.Api.Services
 
                 if (isNewUser)
                 {
-                    user = new IdentityUser { UserName = email, Email = email, EmailConfirmed = true };
+                    user = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = true };
                     var createUserResult = await _userManager.CreateAsync(user);
                     if (!createUserResult.Succeeded)
                     {

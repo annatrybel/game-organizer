@@ -1,11 +1,12 @@
 ﻿using GameOrganizer.Api.Models;
+using GameOrganizer.Api.Models.DatabaseModels;
 using GameOrganizer.Api.Models.Dto;
+using GameOrganizer.Api.Services.Errors;
 using GameOrganizer.Api.Services.Interfaces;
 using GameOrganizer.Api.Services.Results;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using GameOrganizer.Api.Services.Errors;
 
 namespace GameOrganizer.Api.Services
 {
@@ -13,12 +14,12 @@ namespace GameOrganizer.Api.Services
     {
         private readonly GameOrganizerDbContext _context;
         private readonly ILogger<UserManagementService> _logger;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
 
         private const string ObjectName = "User";
 
-        public UserManagementService(GameOrganizerDbContext context, ILogger<UserManagementService> logger, UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager)
+        public UserManagementService(GameOrganizerDbContext context, ILogger<UserManagementService> logger, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
         {
             _context = context;
             _logger = logger;
@@ -143,7 +144,7 @@ namespace GameOrganizer.Api.Services
                     }
                 }
 
-                var newUser = new IdentityUser
+                var newUser = new ApplicationUser
                 {
                     Email = user.Email,
                     UserName = user.UserName,

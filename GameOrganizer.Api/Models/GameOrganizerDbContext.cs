@@ -11,7 +11,7 @@ using GameOrganizer.Api.Models.View;
 
 namespace GameOrganizer.Api.Models
 {
-    public class GameOrganizerDbContext : IdentityDbContext
+    public class GameOrganizerDbContext : IdentityDbContext<ApplicationUser>
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -77,9 +77,9 @@ namespace GameOrganizer.Api.Models
                .HasNoKey();
         }
 
-        private async Task<IdentityUser?> GetIdentityUser()
+        private async Task<ApplicationUser?> GetIdentityUser()
         {
-            IdentityUser? identityUser = null;
+            ApplicationUser? identityUser = null;
             var userIdentity = _httpContextAccessor?.HttpContext?.User?.Identity;
             if (userIdentity != null)
             {
@@ -107,7 +107,7 @@ namespace GameOrganizer.Api.Models
                         e.Entity.GetType() != typeof(HistoryLog)
                         );
 
-            IdentityUser? identityUser = null;
+            ApplicationUser? identityUser = null;
             bool isAnyEntityChanged = entries.Any();
             if (isAnyEntityChanged)
                 identityUser = await GetIdentityUser();
@@ -123,7 +123,7 @@ namespace GameOrganizer.Api.Models
                 }
 
 
-                string typeName = entry.Entity.GetType() == typeof(IdentityUser)
+                string typeName = entry.Entity.GetType() == typeof(ApplicationUser)
                     ? "User"
                     : entry.Entity.GetType().Name;
 
@@ -225,7 +225,7 @@ namespace GameOrganizer.Api.Models
 
                 string[] userFieldsToExclude = { "ConcurrencyStamp", "AccessFailedCount", "PasswordHash", "SecurityStamp" };
 
-                bool isIdentityUser = entry.Entity.GetType().Equals(typeof(IdentityUser));
+                bool isIdentityUser = entry.Entity.GetType().Equals(typeof(ApplicationUser));
 
                 if (state == EntityState.Added)
                 {
