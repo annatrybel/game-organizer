@@ -23,10 +23,18 @@ namespace GameOrganizer.Api.Services
         private readonly IWebHostEnvironment _hostingEnvironment;
         private readonly IEmailSender _emailSender;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IFileService _fileService;
         private const string ObjectName = "User";
 
         public AuthService(UserManager<ApplicationUser> userManager,
-        ICollectionService collectionService, ILogger<AuthService> logger, IConfiguration configuration, SignInManager<ApplicationUser> signInManager, IWebHostEnvironment hostingEnvironment, IEmailSender emailSender, IHttpContextAccessor httpContextAccessor)
+        ICollectionService collectionService,
+        ILogger<AuthService> logger,
+        IConfiguration configuration,
+        SignInManager<ApplicationUser> signInManager,
+        IWebHostEnvironment hostingEnvironment, 
+        IEmailSender emailSender,
+        IHttpContextAccessor httpContextAccessor,
+        IFileService fileService)
         {
             _userManager = userManager;
             _collectionService = collectionService;
@@ -36,6 +44,7 @@ namespace GameOrganizer.Api.Services
             _hostingEnvironment = hostingEnvironment;
             _emailSender = emailSender;
             _httpContextAccessor = httpContextAccessor;
+            _fileService = fileService;
         }
 
         public async Task<ServiceResult> RegisterAsync(RegisterDto registerDto, bool isAdmin = false)
@@ -318,6 +327,43 @@ namespace GameOrganizer.Api.Services
                 UserName = username
             };
             return ServiceResult<UserDto>.Success(user);
+        }
+
+        public async Task<ServiceResult> UpdateProfileAsync(string userId, UpdateProfileDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return ServiceResult.Failure(CommonErrors.NotFound("User", userId));
+
+            if (!string.IsNullOrWhiteSpace(dto.Username) && dto.Username != user.UserName)
+            {
+                var existing = await _userManager.FindByNameAsync(dto.Username);
+                if (existing != null)
+                    return ServiceResult.Failure(new ServiceError("User.UsernameTaken", "Ta nazwa użytkownika jest już zajęta."));
+
+                user.UserName = dto.Username;
+            }
+
+            if (dto.Avatar != null)
+            {
+                if (!string.IsNullOrEmpty(user.AvatarUrl) && user.AvatarUrl.Contains("cloudinary.com"))
+                {
+                    await _fileService.DeleteImageAsync(user.AvatarUrl);
+                }
+
+                user.AvatarUrl = await _fileService.UploadImageAsync(dto.Avatar);
+            }
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+                return ServiceResult.Failure("Wystąpił błąd podczas zapisywania profilu.");
+
+            return ServiceResult.Success();
+        }
+
+        public async Task<ServiceResult> LogoutAsync()
+        {
+            await _signInManager.SignOutAsync();
+            return ServiceResult.Success();
         }
     }
 }
