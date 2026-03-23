@@ -48,17 +48,17 @@ namespace GameOrganizer.Api.Services
             return ServiceResult.Success();
         }
 
-        public async Task<ServiceResult> MoveGameAsync(int gameId, int currentCollectionId, int targetCollectionId, string userId)
+        public async Task<ServiceResult> MoveGameAsync(MoveGameRequest request, string userId)
         {
             var userGame = await _context.UserGames
-                .FirstOrDefaultAsync(ug => ug.GameId == gameId && ug.CollectionId == currentCollectionId && ug.UserId == userId);
+                .FirstOrDefaultAsync(ug => ug.GameId == request.GameId && ug.CollectionId == request.CurrentCollectionId && ug.UserId == userId);
 
-            if (userGame == null) return ServiceResult.Failure(CommonErrors.NotFound("GameRecord", gameId));
+            if (userGame == null) return ServiceResult.Failure(CommonErrors.NotFound("GameRecord", request.GameId));
 
-            var targetExists = await _context.Collections.AnyAsync(c => c.Id == targetCollectionId && c.UserId == userId);
-            if (!targetExists) return ServiceResult.Failure(CommonErrors.NotFound("TargetCollection", targetCollectionId));
+            var targetExists = await _context.Collections.AnyAsync(c => c.Id == request.TargetCollectionId && c.UserId == userId);
+            if (!targetExists) return ServiceResult.Failure(CommonErrors.NotFound("TargetCollection", request.TargetCollectionId));
 
-            userGame.CollectionId = targetCollectionId;
+            userGame.CollectionId = request.TargetCollectionId;
             await _context.SaveChangesAsync();
             return ServiceResult.Success();
         }
@@ -230,62 +230,7 @@ namespace GameOrganizer.Api.Services
             return ServiceResult<Game>.Success(game);
         }
 
-        public async Task<ServiceResult<DataTableResponse<Game>>> GetMyGamesAsync(string userId, DataTableRequest request)
-        {
-            try
-            {
-                string[] columnNames = { "Title", "Genre.Name", "Platform.Name", "Description" };
-
-                string sortColumn = (request.OrderColumn >= 0 && request.OrderColumn < columnNames.Length)
-                    ? columnNames[request.OrderColumn]
-                    : "Title";
-
-                var baseQuery = _context.UserGames
-                    .Where(ug => ug.UserId == userId)
-                    .Include(ug => ug.Game)
-                        .ThenInclude(g => g.Genre)
-                    .Include(ug => ug.Game)
-                        .ThenInclude(g => g.Platform)
-                    .Select(ug => ug.Game); 
-
-                var totalRecords = await baseQuery.CountAsync();
-
-                if (!string.IsNullOrEmpty(request.SearchValue))
-                {
-                    string searchValueLower = request.SearchValue.ToLower();
-                    baseQuery = baseQuery.Where(g =>
-                        g.Title.ToLower().Contains(searchValueLower) ||
-                        (g.Description != null && g.Description.ToLower().Contains(searchValueLower)) ||
-                        g.Genre.Name.ToLower().Contains(searchValueLower) ||
-                        g.Platform.Name.ToLower().Contains(searchValueLower)); 
-                }
-
-                var recordsFiltered = await baseQuery.CountAsync();
-
-                if (!string.IsNullOrEmpty(sortColumn) && !string.IsNullOrEmpty(request.OrderDir))
-                {
-                    baseQuery = baseQuery.OrderBy(sortColumn + " " + request.OrderDir);
-                }
-
-                var data = await baseQuery
-                    .Skip(request.Start)
-                    .Take(request.Length)
-                    .ToListAsync();
-
-                return ServiceResult<DataTableResponse<Game>>.Success(new DataTableResponse<Game>
-                {
-                    Draw = request.Draw,
-                    RecordsTotal = totalRecords,
-                    RecordsFiltered = recordsFiltered,
-                    Data = data
-                });
-            }
-            catch (Exception ex)
-            {
-                return ServiceResult<DataTableResponse<Game>>.Failure(CommonErrors.DataProcessingError());
-            }
-        }
-
+       
         public async Task<ServiceResult<Game>> UpdateGameAsync(GameDto dto)
         {
             var game = await _context.Games.FindAsync(dto.Id);

@@ -1,18 +1,19 @@
-﻿using GameOrganizer.Api.Models;
+﻿using GameOrganizer.Api.Hubs;
+using GameOrganizer.Api.Models;
+using GameOrganizer.Api.Models.DatabaseModels;
+using GameOrganizer.Api.Seeders;
+using GameOrganizer.Api.Services;
+using GameOrganizer.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using Microsoft.AspNetCore.HttpOverrides;
-using GameOrganizer.Api.Services;
-using GameOrganizer.Api.Services.Interfaces;
-using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
-using GameOrganizer.Api.Seeders;
-using GameOrganizer.Api.Hubs;
 
 const string envFileName = ".env";
 var currentDirectory = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
@@ -53,7 +54,7 @@ builder.Services.AddDbContext<GameOrganizerDbContext>(options =>
 
 
 // Identity
-builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;
     options.Password.RequiredLength = 8;

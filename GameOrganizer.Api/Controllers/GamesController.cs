@@ -83,25 +83,6 @@ namespace GameOrganizer.Api.Controllers
         }
 
         /// <summary>
-        /// Pobiera listę gier znajdujących się w kolekcji użytkownika (DataTable - stronicowanie, wyszukiwanie, sortowanie).
-        /// </summary>
-        /// <param name="request">Parametry zapytania DataTable.</param>
-        /// <returns>Strona gier użytkownika.</returns>
-        [HttpPost("my-collection")]
-        [ProducesResponseType(typeof(DataTableResponse<Game>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> GetMyGames([FromBody] DataTableRequest request)
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            // Obsługa braku ID użytkownika w claimach
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
-
-            var result = await _gameService.GetMyGamesAsync(userId, request);
-            return HandleServiceResult(result);
-        }
-
-        /// <summary>
         /// Przenosi grę pomiędzy kolekcjami (folderami) użytkownika.
         /// </summary>
         /// <remarks>
@@ -120,12 +101,7 @@ namespace GameOrganizer.Api.Controllers
 
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var result = await _gameService.MoveGameAsync(
-                request.GameId,
-                request.CurrentCollectionId,
-                request.TargetCollectionId,
-                userId
-            );
+            var result = await _gameService.MoveGameAsync(request, userId);
 
             return HandleServiceResult(result);
         }

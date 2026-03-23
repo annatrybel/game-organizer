@@ -11,10 +11,20 @@ namespace GameOrganizer.Api.Models.Dto
         [Required]
         [EmailAddress]
         public string Email { get; set; } = string.Empty;
+        public string? AvatarUrl { get; set; }
+        public string? Bio { get; set; }
         [Required]
         public string RoleId { get; set; } = string.Empty;
         public string RoleName { get; set; } = string.Empty;
         public bool IsLocked { get; set; }
         public List<IdentityRole> AvailableRoles { get; set; } = new List<IdentityRole>();
+    }
+
+    public class UpdateProfileDto
+    {
+        public string Username { get; set; } = string.Empty;
+        public IFormFile? Avatar { get; set; }
+        [StringLength(500)]
+        public string? Bio { get; set; }
     }
 }

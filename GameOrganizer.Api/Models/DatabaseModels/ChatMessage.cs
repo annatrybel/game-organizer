@@ -10,11 +10,11 @@ namespace GameOrganizer.Api.Models.DatabaseModels
 
         // Nadawca
         public string SenderId { get; set; }
-        public IdentityUser Sender { get; set; }
+        public ApplicationUser Sender { get; set; }
 
         // Indywidualny czat
         public string? ReceiverId { get; set; }
-        public IdentityUser? Receiver { get; set; }
+        public ApplicationUser? Receiver { get; set; }
 
         // Grupowy czat
         public int? GroupId { get; set; }
@@ -25,7 +25,7 @@ namespace GameOrganizer.Api.Models.DatabaseModels
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public ICollection<IdentityUser> Members { get; set; } = new List<IdentityUser>();
+        public ICollection<ApplicationUser> Members { get; set; } = new List<ApplicationUser>();
         public ICollection<ChatMessage> Messages { get; set; } = new List<ChatMessage>();
     }
 }

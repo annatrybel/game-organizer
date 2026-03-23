@@ -11,5 +11,7 @@ namespace GameOrganizer.Api.Services.Interfaces
         Task<ServiceResult> ResetPasswordAsync(ResetPasswordDto resetPasswordDto);
         Task<ServiceResult<LoginResponse>> HandleExternalLoginAsync();
         Task<ServiceResult<UserDto>> GetMe();
+        Task<ServiceResult> UpdateProfileAsync(string userId, UpdateProfileDto dto);
+        Task<ServiceResult> LogoutAsync();
     }
 }

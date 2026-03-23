@@ -1,4 +1,5 @@
-﻿using GameOrganizer.Api.Models.Dto;
+﻿using GameOrganizer.Api.Models.DatabaseModels;
+using GameOrganizer.Api.Models.Dto;
 using GameOrganizer.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Sprache;
 using System.Net;
+using System.Security.Claims;
 
 namespace GameOrganizer.Api.Controllers
 {
@@ -15,10 +17,10 @@ namespace GameOrganizer.Api.Controllers
     public class AuthController : GameOrganizerBaseController
     {
         private readonly IAuthService _authService;
-        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IConfiguration _configuration;
 
-        public AuthController(IAuthService authService, IConfiguration configuration, SignInManager<IdentityUser> signInManager)
+        public AuthController(IAuthService authService, IConfiguration configuration, SignInManager<ApplicationUser> signInManager)
         {
             _authService = authService;
             _signInManager = signInManager;
@@ -154,6 +156,33 @@ namespace GameOrganizer.Api.Controllers
         public async Task<IActionResult> GetMe()
         {
             var result = await _authService.GetMe();            
+            return HandleServiceResult(result);
+        }
+
+        /// <summary>
+        /// Aktualizuje nazwę i avatar aktualnie zalogowanego użytkownika.
+        /// </summary>
+        [Authorize]
+        [HttpPut("update-profile")]
+        [Consumes("multipart/form-data")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileDto dto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var result = await _authService.UpdateProfileAsync(userId, dto);
+            return HandleServiceResult(result);
+        }
+
+        /// <summary>
+        /// Wylogowuje użytkownika z systemu i czyści sesję serwera.
+        /// </summary>
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var result = await _authService.LogoutAsync();
             return HandleServiceResult(result);
         }
     }

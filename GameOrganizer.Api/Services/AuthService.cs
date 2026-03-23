@@ -1,4 +1,5 @@
-﻿using GameOrganizer.Api.Models.Dto;
+﻿using GameOrganizer.Api.Models.DatabaseModels;
+using GameOrganizer.Api.Models.Dto;
 using GameOrganizer.Api.Services.Errors;
 using GameOrganizer.Api.Services.Interfaces;
 using GameOrganizer.Api.Services.Results;
@@ -14,24 +15,36 @@ namespace GameOrganizer.Api.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ICollectionService _collectionService;
         private readonly ILogger<AuthService> _logger;
         private readonly IConfiguration _configuration;
-        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IWebHostEnvironment _hostingEnvironment;
         private readonly IEmailSender _emailSender;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IFileService _fileService;
         private const string ObjectName = "User";
 
-        public AuthService(UserManager<IdentityUser> userManager, ILogger<AuthService> logger, IConfiguration configuration, SignInManager<IdentityUser> signInManager, IWebHostEnvironment hostingEnvironment, IEmailSender emailSender, IHttpContextAccessor httpContextAccessor)
+        public AuthService(UserManager<ApplicationUser> userManager,
+        ICollectionService collectionService,
+        ILogger<AuthService> logger,
+        IConfiguration configuration,
+        SignInManager<ApplicationUser> signInManager,
+        IWebHostEnvironment hostingEnvironment, 
+        IEmailSender emailSender,
+        IHttpContextAccessor httpContextAccessor,
+        IFileService fileService)
         {
             _userManager = userManager;
+            _collectionService = collectionService;
             _logger = logger;
             _configuration = configuration;
             _signInManager = signInManager;
             _hostingEnvironment = hostingEnvironment;
             _emailSender = emailSender;
             _httpContextAccessor = httpContextAccessor;
+            _fileService = fileService;
         }
 
         public async Task<ServiceResult> RegisterAsync(RegisterDto registerDto, bool isAdmin = false)
@@ -53,7 +66,7 @@ namespace GameOrganizer.Api.Services
                 return ServiceResult.Failure(AuthErrors.UsernameTaken());
             }
 
-            var user = new IdentityUser
+            var user = new ApplicationUser
             {
                 Email = registerDto.Email,
                 UserName = registerDto.Username,
@@ -76,7 +89,9 @@ namespace GameOrganizer.Api.Services
                     await _userManager.AddToRoleAsync(user, "User");
                     _logger.LogInformation("Użytkownik utworzony z rolą User.");
                 }
-                _logger.LogInformation("User created a new account with password.");
+                await _collectionService.InitDefaultCollectionsAsync(user.Id);
+
+                _logger.LogInformation("User created a new account with password and default collections.");
             }
             else
             {
@@ -94,7 +109,7 @@ namespace GameOrganizer.Api.Services
                 return ServiceResult.Failure(AuthErrors.UserAlreadyExists());
             }
 
-            var user = new IdentityUser
+            var user = new ApplicationUser
             {
                 Email = registerDto.Email,
                 UserName = registerDto.Username,
@@ -136,7 +151,7 @@ namespace GameOrganizer.Api.Services
             return ServiceResult<LoginResponse>.Success(new LoginResponse(token));
         }
 
-        private async Task<string> GenerateJwtTokenAsync(IdentityUser user)
+        private async Task<string> GenerateJwtTokenAsync(ApplicationUser user)
         {
             var claims = new List<Claim>
             {
@@ -260,7 +275,7 @@ namespace GameOrganizer.Api.Services
 
                 if (isNewUser)
                 {
-                    user = new IdentityUser { UserName = email, Email = email, EmailConfirmed = true };
+                    user = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = true };
                     var createUserResult = await _userManager.CreateAsync(user);
                     if (!createUserResult.Succeeded)
                     {
@@ -281,6 +296,7 @@ namespace GameOrganizer.Api.Services
                         await _userManager.AddToRoleAsync(user, "User");
                         _logger.LogInformation("Nowy użytkownik (zewnętrzny) otrzymał rolę User.");
                     }
+                    await _collectionService.InitDefaultCollectionsAsync(user.Id);
                 }
 
                 var addLoginResult = await _userManager.AddLoginAsync(user, info);
@@ -311,6 +327,44 @@ namespace GameOrganizer.Api.Services
                 UserName = username
             };
             return ServiceResult<UserDto>.Success(user);
+        }
+
+        public async Task<ServiceResult> UpdateProfileAsync(string userId, UpdateProfileDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return ServiceResult.Failure(CommonErrors.NotFound("User", userId));
+
+            if (!string.IsNullOrWhiteSpace(dto.Username) && dto.Username != user.UserName)
+            {
+                var existing = await _userManager.FindByNameAsync(dto.Username);
+                if (existing != null)
+                    return ServiceResult.Failure(new ServiceError("User.UsernameTaken", "Ta nazwa użytkownika jest już zajęta."));
+
+                user.UserName = dto.Username;
+            }
+
+            user.Bio = dto.Bio;
+
+            if (dto.Avatar != null)
+            {
+                if (!string.IsNullOrEmpty(user.AvatarUrl) && user.AvatarUrl.Contains("cloudinary.com"))
+                {
+                    await _fileService.DeleteImageAsync(user.AvatarUrl);
+                }
+                user.AvatarUrl = await _fileService.UploadImageAsync(dto.Avatar);
+            }
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+                return ServiceResult.Failure("Wystąpił błąd podczas zapisywania profilu.");
+
+            return ServiceResult.Success();
+        }
+
+        public async Task<ServiceResult> LogoutAsync()
+        {
+            await _signInManager.SignOutAsync();
+            return ServiceResult.Success();
         }
     }
 }
