@@ -11,7 +11,7 @@ namespace GameOrganizer.Api.Services.Interfaces
         Task<ServiceResult<Game>> UpdateGameAsync(GameDto dto);
         Task<ServiceResult> DeleteGameAsync(int gameId);
         Task<ServiceResult> AddToUserCollectionAsync(int gameId, int collectionId, string userId);
-        Task<ServiceResult> MoveGameAsync(int gameId, int currentCollectionId, int targetCollectionId, string userId);
+        Task<ServiceResult> MoveGameAsync(MoveGameRequest request, string userId);
         Task<ServiceResult<Game>> ProposeNewGameAsync(GameDto dto, string userId);
         Task<ServiceResult> AcceptGameAsync(int gameId);
         Task<ServiceResult> RejectGameAsync(int gameId, string? reason);

@@ -48,17 +48,17 @@ namespace GameOrganizer.Api.Services
             return ServiceResult.Success();
         }
 
-        public async Task<ServiceResult> MoveGameAsync(int gameId, int currentCollectionId, int targetCollectionId, string userId)
+        public async Task<ServiceResult> MoveGameAsync(MoveGameRequest request, string userId)
         {
             var userGame = await _context.UserGames
-                .FirstOrDefaultAsync(ug => ug.GameId == gameId && ug.CollectionId == currentCollectionId && ug.UserId == userId);
+                .FirstOrDefaultAsync(ug => ug.GameId == request.GameId && ug.CollectionId == request.CurrentCollectionId && ug.UserId == userId);
 
-            if (userGame == null) return ServiceResult.Failure(CommonErrors.NotFound("GameRecord", gameId));
+            if (userGame == null) return ServiceResult.Failure(CommonErrors.NotFound("GameRecord", request.GameId));
 
-            var targetExists = await _context.Collections.AnyAsync(c => c.Id == targetCollectionId && c.UserId == userId);
-            if (!targetExists) return ServiceResult.Failure(CommonErrors.NotFound("TargetCollection", targetCollectionId));
+            var targetExists = await _context.Collections.AnyAsync(c => c.Id == request.TargetCollectionId && c.UserId == userId);
+            if (!targetExists) return ServiceResult.Failure(CommonErrors.NotFound("TargetCollection", request.TargetCollectionId));
 
-            userGame.CollectionId = targetCollectionId;
+            userGame.CollectionId = request.TargetCollectionId;
             await _context.SaveChangesAsync();
             return ServiceResult.Success();
         }

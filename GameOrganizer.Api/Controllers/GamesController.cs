@@ -101,12 +101,7 @@ namespace GameOrganizer.Api.Controllers
 
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var result = await _gameService.MoveGameAsync(
-                request.GameId,
-                request.CurrentCollectionId,
-                request.TargetCollectionId,
-                userId
-            );
+            var result = await _gameService.MoveGameAsync(request, userId);
 
             return HandleServiceResult(result);
         }
