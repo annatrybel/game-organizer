@@ -6,5 +6,6 @@ namespace GameOrganizer.Api.Models.DatabaseModels
     {
         public string? AvatarUrl { get; set; }
         public string? Bio { get; set; }
+        public string InvitationCode { get; set; } = Guid.NewGuid().ToString("N").Substring(0, 8);
     }
 }
