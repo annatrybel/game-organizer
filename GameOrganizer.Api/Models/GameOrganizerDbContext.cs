@@ -38,6 +38,8 @@ namespace GameOrganizer.Api.Models
         public DbSet<Platform> Platforms { get; set; }
         public DbSet<Collection> Collections { get; set; }
         public DbSet<UserGamesView> UserGamesView { get; set; }
+        public DbSet<Friendship> Friendship { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -75,6 +77,21 @@ namespace GameOrganizer.Api.Models
             modelBuilder.Entity<UserGamesView>()
                .ToView("UserGamesView")
                .HasNoKey();
+
+            modelBuilder.Entity<Friendship>(entity =>
+            {
+                entity.HasOne(f => f.Requester)
+                    .WithMany()
+                    .HasForeignKey(f => f.RequesterId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(f => f.Receiver)
+                    .WithMany()
+                    .HasForeignKey(f => f.ReceiverId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(f => new { f.RequesterId, f.ReceiverId }).IsUnique();
+            });
         }
 
         private async Task<ApplicationUser?> GetIdentityUser()
