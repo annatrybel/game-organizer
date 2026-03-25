@@ -130,6 +130,66 @@ namespace GameOrganizer.Api.Services
                  _logger.LogError(ex, "Błąd wysyłania zaproszenia");
                 return ServiceResult.Failure(new ServiceError("Email.Failed", "Nie udało się wysłać zaproszenia."));
             }
-        }    
+        }
+
+        public async Task<ServiceResult<DataTableResponse<UserSearchResultDto>>> SearchUsersAsync(string currentUserId, DataTableRequest request)
+        {
+            try
+            {
+                var baseQuery = _userManager.Users
+                    .Where(u => u.Id != currentUserId); 
+
+                if (!string.IsNullOrEmpty(request.SearchValue))
+                {
+                    var sv = request.SearchValue.ToLower();
+                    baseQuery = baseQuery.Where(u => u.UserName!.ToLower().Contains(sv) || u.Email!.ToLower().Contains(sv));
+                }
+
+                var totalRecords = await baseQuery.CountAsync();
+
+                var users = await baseQuery
+                    .Skip(request.Start)
+                    .Take(request.Length)
+                    .ToListAsync();
+
+                var myFriendships = await _context.Friendship
+                    .Where(f => f.RequesterId == currentUserId || f.ReceiverId == currentUserId)
+                    .ToListAsync();
+
+                var resultData = users.Select(u => {
+                    var rel = myFriendships.FirstOrDefault(f => f.RequesterId == u.Id || f.ReceiverId == u.Id);
+                    string status = "None";
+
+                    if (rel != null)
+                    {
+                        if (rel.Status == FriendshipStatus.Accepted) status = "Accepted";
+                        else if (rel.Status == FriendshipStatus.Rejected) status = "Rejected";
+                        else 
+                        {
+                            status = rel.RequesterId == currentUserId ? "PendingSent" : "PendingReceived";
+                        }
+                    }
+
+                    return new UserSearchResultDto
+                    {
+                        Id = u.Id,
+                        UserName = u.UserName!,
+                        AvatarUrl = u.AvatarUrl,
+                        RelationStatus = status
+                    };
+                }).ToList();
+
+                return ServiceResult<DataTableResponse<UserSearchResultDto>>.Success(new DataTableResponse<UserSearchResultDto>
+                {
+                    Draw = request.Draw,
+                    RecordsTotal = totalRecords,
+                    RecordsFiltered = totalRecords,
+                    Data = resultData
+                });
+            }
+            catch (Exception) { return ServiceResult<DataTableResponse<UserSearchResultDto>>.Failure(CommonErrors.DataProcessingError()); }
+        }
+
+       
     }
 }
