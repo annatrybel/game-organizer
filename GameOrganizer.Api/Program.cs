@@ -96,7 +96,8 @@ builder.Services.AddAuthentication(options =>
         {
             var accessToken = context.Request.Query["access_token"];
             var path = context.HttpContext.Request.Path;
-            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chatHub"))
+            if (!string.IsNullOrEmpty(accessToken) &&
+          (path.StartsWithSegments("/chatHub") || path.StartsWithSegments("/notificationHub")))
             {
                 context.Token = accessToken;
             }
@@ -161,6 +162,7 @@ builder.Services.AddScoped<IHistoryLogService, HistoryLogService>();
 builder.Services.AddScoped<IGameService, GameService>();
 builder.Services.AddScoped<IFileService, CloudinaryService>();
 builder.Services.AddScoped<ICollectionService, CollectionService>();
+builder.Services.AddScoped<IFriendService, FriendService>();
 
 
 builder.Services.AddControllers();
@@ -202,6 +204,7 @@ builder.Services.AddHealthChecks();
 var app = builder.Build();
 
 app.MapHub<ChatHub>("/chatHub");
+app.MapHub<NotificationHub>("/notificationHub");
 
 // Konfiguracja do poprawnej obs�ugi za reverse proxy (na Render)
 var forwardedHeadersOptions = new ForwardedHeadersOptions

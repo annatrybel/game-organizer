@@ -39,6 +39,7 @@ namespace GameOrganizer.Api.Models
         public DbSet<Collection> Collections { get; set; }
         public DbSet<UserGamesView> UserGamesView { get; set; }
         public DbSet<Friendship> Friendship { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
