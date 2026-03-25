@@ -1,6 +1,11 @@
 ﻿namespace GameOrganizer.Api.Models.DatabaseModels
 {
-    public enum FriendshipStatus { Pending, Accepted }
+    public enum FriendshipStatus
+    {
+        Pending,  
+        Accepted, 
+        Rejected  
+    }
 
     public class Friendship
     {
