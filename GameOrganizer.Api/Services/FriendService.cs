@@ -190,6 +190,26 @@ namespace GameOrganizer.Api.Services
             catch (Exception) { return ServiceResult<DataTableResponse<UserSearchResultDto>>.Failure(CommonErrors.DataProcessingError()); }
         }
 
+        public async Task<ServiceResult> AcceptFriendRequestAsync(string currentUserId, string requesterId)
+        {
+            var friendship = await _context.Friendship
+                .FirstOrDefaultAsync(f => f.RequesterId == requesterId && f.ReceiverId == currentUserId && f.Status == FriendshipStatus.Pending);
+
+            if (friendship == null) return ServiceResult.Failure(CommonErrors.NotFound("Zaproszenie", requesterId));
+
+            friendship.Status = FriendshipStatus.Accepted;
+            await _context.SaveChangesAsync();
+
+            var me = await _userManager.FindByIdAsync(currentUserId);
+            await _hubContext.Clients.User(requesterId).SendAsync("ReceiveNotification", new
+            {
+                message = $"Użytkownik {me?.UserName} zaakceptował Twoje zaproszenie!",
+                type = "FriendAcceptance"
+            });
+
+            return ServiceResult.Success();
+        }
+
        
     }
 }
