@@ -95,6 +95,27 @@ namespace GameOrganizer.Api.Models
 
                 entity.HasIndex(f => new { f.RequesterId, f.ReceiverId }).IsUnique();
             });
+
+            // Grupa -> Członkowie 
+            modelBuilder.Entity<ChatGroupMember>()
+                .HasOne(m => m.ChatGroup)
+                .WithMany(g => g.Members)
+                .HasForeignKey(m => m.ChatGroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Grupa -> Wiadomości 
+            modelBuilder.Entity<ChatMessage>()
+                .HasOne(m => m.Group)
+                .WithMany(g => g.Messages)
+                .HasForeignKey(m => m.GroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Użytkownik -> Członkostwo
+            modelBuilder.Entity<ChatGroupMember>()
+                .HasOne(m => m.User)
+                .WithMany()
+                .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
         private async Task<ApplicationUser?> GetIdentityUser()
