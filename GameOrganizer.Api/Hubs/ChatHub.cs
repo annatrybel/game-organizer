@@ -1,38 +1,47 @@
-﻿using Microsoft.AspNetCore.SignalR;
-using Microsoft.AspNetCore.Authorization;
+﻿using GameOrganizer.Api.Models.DatabaseModels;
+using GameOrganizer.Api.Models.Dto;
 using GameOrganizer.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 
 namespace GameOrganizer.Api.Hubs
 {
-    [Authorize] // Wymaga JWT
+    [Authorize] 
     public class ChatHub : Hub
     {
         private readonly IChatService _chatService;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public ChatHub(IChatService chatService)
+        public ChatHub(IChatService chatService, UserManager<ApplicationUser> userManager)
         {
             _chatService = chatService;
+            _userManager = userManager;
         }
 
-        public async Task SendMessage(string content, string? receiverId, int? groupId)
+        /// <summary>
+        /// Wysyła wiadomość do konkretnej grupy.
+        /// </summary>
+        public async Task SendMessageToGroup(int groupId, string content)
         {
-            var senderId = Context.UserIdentifier; 
+            var user = await _userManager.GetUserAsync(Context.User); 
+            if (user == null) return;
 
-            var savedMessage = await _chatService.SaveMessageAsync(senderId, content, groupId, receiverId);
+            var saved = await _chatService.SaveMessageAsync(user.Id, content, groupId);
 
-            if (groupId.HasValue)
+            var dto = new ChatMessageDto
             {
-                await Clients.Group(groupId.Value.ToString()).SendAsync("ReceiveMessage", savedMessage);
-            }
-            else if (!string.IsNullOrEmpty(receiverId))
-            {
-                await Clients.Users(senderId, receiverId).SendAsync("ReceiveMessage", savedMessage);
-            }
+                Id = saved.Id,
+                Content = saved.Content,
+                Timestamp = saved.Timestamp,
+                SenderId = user.Id,
+                SenderName = user.UserName!,
+                GroupId = groupId
+            };
+
+            await Clients.Group(groupId.ToString()).SendAsync("ReceiveMessage", dto);
         }
 
-        public async Task JoinGroup(int groupId)
-        {
-            await Groups.AddToGroupAsync(Context.ConnectionId, groupId.ToString());
-        }
+       
     }
 }
