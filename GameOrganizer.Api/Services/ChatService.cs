@@ -106,5 +106,46 @@ namespace GameOrganizer.Api.Services
             await _context.SaveChangesAsync();
             return message;
         }
+
+
+        public async Task<ServiceResult> AddUserToGroupAsync(int groupId, string requesterId, string targetUserId)
+        {
+            var isMember = await _context.ChatGroupMembers.AnyAsync(m => m.ChatGroupId == groupId && m.UserId == requesterId);
+            if (!isMember) return ServiceResult.Failure(CommonErrors.Forbidden());
+
+            var alreadyIn = await _context.ChatGroupMembers.AnyAsync(m => m.ChatGroupId == groupId && m.UserId == targetUserId);
+            if (alreadyIn) return ServiceResult.Success();
+
+            _context.ChatGroupMembers.Add(new ChatGroupMember { ChatGroupId = groupId, UserId = targetUserId });
+            await _context.SaveChangesAsync();
+
+            return ServiceResult.Success();
+        }
+
+        public async Task<ServiceResult> RemoveUserFromGroupAsync(int groupId, string userId)
+        {
+            var member = await _context.ChatGroupMembers
+                .FirstOrDefaultAsync(m => m.ChatGroupId == groupId && m.UserId == userId);
+
+            if (member == null)
+                return ServiceResult.Failure(CommonErrors.NotFound("Członek czatu", userId));
+
+            _context.ChatGroupMembers.Remove(member);
+            await _context.SaveChangesAsync();
+
+            var remainingMembers = await _context.ChatGroupMembers.AnyAsync(m => m.ChatGroupId == groupId);
+
+            if (!remainingMembers)
+            {
+                var group = await _context.ChatGroups.FindAsync(groupId);
+                if (group != null)
+                {
+                    _context.ChatGroups.Remove(group);
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            return ServiceResult.Success();
+        }
     }
 }

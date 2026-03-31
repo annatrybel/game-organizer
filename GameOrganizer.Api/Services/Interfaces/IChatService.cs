@@ -10,5 +10,7 @@ namespace GameOrganizer.Api.Services.Interfaces
         Task<ServiceResult<IEnumerable<ChatMessageDto>>> GetChatHistoryAsync(int groupId, string userId);
         Task<ServiceResult<int>> CreateChatAsync(string currentUserId, CreateChatRequest request);
         Task<ChatMessage> SaveMessageAsync(string senderId, string content, int groupId);
+        Task<ServiceResult> AddUserToGroupAsync(int groupId, string requesterId, string targetUserId);
+        Task<ServiceResult> RemoveUserFromGroupAsync(int groupId, string userId);
     }
 }
