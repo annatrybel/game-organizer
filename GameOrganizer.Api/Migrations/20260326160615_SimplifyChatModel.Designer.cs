@@ -3,6 +3,7 @@ using System;
 using GameOrganizer.Api.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GameOrganizer.Api.Migrations
 {
     [DbContext(typeof(GameOrganizerDbContext))]
-    partial class GameOrganizerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260326160615_SimplifyChatModel")]
+    partial class SimplifyChatModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -152,7 +155,7 @@ namespace GameOrganizer.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("GroupId")
+                    b.Property<int?>("GroupId")
                         .HasColumnType("integer");
 
                     b.Property<string>("SenderId")
@@ -647,9 +650,7 @@ namespace GameOrganizer.Api.Migrations
                 {
                     b.HasOne("GameOrganizer.Api.Models.DatabaseModels.ChatGroup", "Group")
                         .WithMany("Messages")
-                        .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("GroupId");
 
                     b.HasOne("GameOrganizer.Api.Models.DatabaseModels.ApplicationUser", "Sender")
                         .WithMany()

@@ -32,6 +32,8 @@ namespace GameOrganizer.Api.Models
        
         public DbSet<HistoryLog> HistoryLogs { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<ChatGroupMember> ChatGroupMembers { get; set; }
+        public DbSet<ChatGroup> ChatGroups { get; set; }
         public DbSet<Game> Games { get; set; }
         public DbSet<UserGame> UserGames { get; set; }
         public DbSet<Genre> Genres { get; set; }
@@ -40,6 +42,7 @@ namespace GameOrganizer.Api.Models
         public DbSet<UserGamesView> UserGamesView { get; set; }
         public DbSet<Friendship> Friendship { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -92,6 +95,27 @@ namespace GameOrganizer.Api.Models
 
                 entity.HasIndex(f => new { f.RequesterId, f.ReceiverId }).IsUnique();
             });
+
+            // Grupa -> Członkowie 
+            modelBuilder.Entity<ChatGroupMember>()
+                .HasOne(m => m.ChatGroup)
+                .WithMany(g => g.Members)
+                .HasForeignKey(m => m.ChatGroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Grupa -> Wiadomości 
+            modelBuilder.Entity<ChatMessage>()
+                .HasOne(m => m.Group)
+                .WithMany(g => g.Messages)
+                .HasForeignKey(m => m.GroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Użytkownik -> Członkostwo
+            modelBuilder.Entity<ChatGroupMember>()
+                .HasOne(m => m.User)
+                .WithMany()
+                .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
         private async Task<ApplicationUser?> GetIdentityUser()

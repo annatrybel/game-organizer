@@ -1,10 +1,16 @@
 ﻿using GameOrganizer.Api.Models.DatabaseModels;
+using GameOrganizer.Api.Models.Dto;
+using GameOrganizer.Api.Services.Results;
 
 namespace GameOrganizer.Api.Services.Interfaces
 {
     public interface IChatService
     {
-        Task<ChatMessage> SaveMessageAsync(string senderId, string content, int? groupId, string? receiverId);
-        Task<IEnumerable<ChatMessage>> GetHistoryAsync(int groupId);
+        Task<ServiceResult<IEnumerable<ChatGroupDto>>> GetUserChatsAsync(string userId);
+        Task<ServiceResult<IEnumerable<ChatMessageDto>>> GetChatHistoryAsync(int groupId, string userId);
+        Task<ServiceResult<int>> CreateChatAsync(string currentUserId, CreateChatRequest request);
+        Task<ChatMessage> SaveMessageAsync(string senderId, string content, int groupId);
+        Task<ServiceResult> AddUserToGroupAsync(int groupId, string requesterId, string targetUserId);
+        Task<ServiceResult> RemoveUserFromGroupAsync(int groupId, string userId);
     }
 }
