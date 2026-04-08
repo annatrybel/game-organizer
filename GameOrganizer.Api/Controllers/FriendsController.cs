@@ -82,5 +82,16 @@ namespace GameOrganizer.Api.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             return HandleServiceResult(await _friendService.RejectFriendRequestAsync(userId!, friendId));
         }
+
+        /// <summary>
+        /// Pobiera wszystkie kolekcje znajomego wraz z przypisanymi do nich grami.
+        /// </summary>
+        [HttpGet("{friendId}/collections-with-games")]
+        public async Task<IActionResult> GetFriendCollectionsWithGames(string friendId)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _friendService.GetFriendCollectionsWithGamesAsync(currentUserId!, friendId);
+            return HandleServiceResult(result);
+        }
     }
 }

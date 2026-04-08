@@ -238,5 +238,43 @@ namespace GameOrganizer.Api.Services
 
             return ServiceResult<IEnumerable<FriendDto>>.Success(requests);
         }
+
+        public async Task<ServiceResult<IEnumerable<CollectionWithGamesDto>>> GetFriendCollectionsWithGamesAsync(string currentUserId, string friendId)
+        {
+            var areFriends = await _context.Friendship
+                .AnyAsync(f => ((f.RequesterId == currentUserId && f.ReceiverId == friendId) ||
+                                (f.RequesterId == friendId && f.ReceiverId == currentUserId))
+                               && f.Status == FriendshipStatus.Accepted);
+
+            if (!areFriends)
+                return ServiceResult<IEnumerable<CollectionWithGamesDto>>.Failure(CommonErrors.Forbidden());
+
+            var viewData = await _context.UserGamesView
+                .Where(v => v.UserId == friendId)
+                .ToListAsync();
+
+            var result = viewData
+                .GroupBy(v => new { v.CollectionId, v.CollectionName })
+                .Select(g => new CollectionWithGamesDto
+                {
+                    CollectionId = g.Key.CollectionId,
+                    CollectionName = g.Key.CollectionName,
+                    Games = g.Select(item => new UserGameDto
+                    {
+                        GameId = item.GameId,
+                        Title = item.Title,
+                        Description = item.Description,
+                        GenreName = item.GenreName,
+                        PlatformName = item.PlatformName,
+                        CollectionId = item.CollectionId,
+                        CollectionName = item.CollectionName,
+                        AddedAt = item.AddedAt
+                    }).ToList()
+                })
+                .OrderBy(c => c.CollectionName)
+                .ToList();
+
+            return ServiceResult<IEnumerable<CollectionWithGamesDto>>.Success(result);
+        }
     }
 }

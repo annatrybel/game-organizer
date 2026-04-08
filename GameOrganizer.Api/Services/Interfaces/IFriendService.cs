@@ -12,5 +12,6 @@ namespace GameOrganizer.Api.Services.Interfaces
         Task<ServiceResult> AcceptFriendRequestAsync(string currentUserId, string requesterId);
         Task<ServiceResult> RejectFriendRequestAsync(string currentUserId, string requesterId);
         Task<ServiceResult<IEnumerable<FriendDto>>> GetIncomingRequestsAsync(string userId);
+        Task<ServiceResult<IEnumerable<CollectionWithGamesDto>>> GetFriendCollectionsWithGamesAsync(string currentUserId, string friendId);
     }
 }
