@@ -301,5 +301,47 @@ namespace GameOrganizer.Api.Services
             var platforms = await _context.Platforms.OrderBy(p => p.Name).ToListAsync();
             return ServiceResult<IEnumerable<Platform>>.Success(platforms);
         }
+
+        public async Task<ServiceResult> RateGameAsync(int gameId, int rating, string userId)
+        {
+            if (rating < 1 || rating > 10)
+                return ServiceResult.Failure(new ServiceError("Rating.Invalid", "Ocena musi mieścić się w przedziale 1-10."));
+
+            var gameExists = await _context.Games.AnyAsync(g => g.Id == gameId && g.Status == GameStatus.Accepted);
+            if (!gameExists) return ServiceResult.Failure(CommonErrors.NotFound("Gra", gameId));
+
+            var existingRating = await _context.UserRating
+                .FirstOrDefaultAsync(r => r.GameId == gameId && r.UserId == userId);
+
+            if (existingRating != null)
+            {
+                existingRating.Value = rating; 
+            }
+            else
+            {
+                var newRating = new UserRating
+                {
+                    GameId = gameId,
+                    UserId = userId,
+                    Value = rating
+                };
+                _context.UserRating.Add(newRating);
+            }
+
+            await _context.SaveChangesAsync();
+            return ServiceResult.Success();
+        }
+
+        public async Task<ServiceResult<double>> GetAverageRatingAsync(int gameId)
+        {
+            var ratings = await _context.UserRating
+                .Where(r => r.GameId == gameId)
+                .ToListAsync();
+
+            if (!ratings.Any()) return ServiceResult<double>.Success(0);
+
+            double average = ratings.Average(r => r.Value);
+            return ServiceResult<double>.Success(Math.Round(average, 1));
+        }
     }
 }

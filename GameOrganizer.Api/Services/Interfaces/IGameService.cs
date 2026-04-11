@@ -20,5 +20,7 @@ namespace GameOrganizer.Api.Services.Interfaces
         Task<ServiceResult<IEnumerable<Genre>>> GetAllGenresAsync();
         Task<ServiceResult> RemoveFromCollectionAsync(int gameId, string userId);
         Task<ServiceResult<IEnumerable<Platform>>> GetAllPlatformsAsync();
+        Task<ServiceResult> RateGameAsync(int gameId, int rating, string userId);
+        Task<ServiceResult<double>> GetAverageRatingAsync(int gameId);
     }
 }

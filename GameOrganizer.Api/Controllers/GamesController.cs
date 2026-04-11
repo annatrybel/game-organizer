@@ -228,5 +228,29 @@ namespace GameOrganizer.Api.Controllers
 
             return HandleServiceResult(result);
         }
+
+        /// <summary>
+        /// Dodaje lub aktualizuje ocenę użytkownika dla konkretnej gry.
+        /// </summary>
+        /// <param name="request">Model zawierający ID gry oraz ocenę (1-10).</param>
+        [HttpPost("rate")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> RateGame([FromBody] RateGameRequest request)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _gameService.RateGameAsync(request.GameId, request.Rating, userId!);
+            return HandleServiceResult(result);
+        }
+
+        /// <summary>
+        /// Pobiera średnią ocenę wybranej gry.
+        /// </summary>
+        [HttpGet("{gameId}/average-rating")]
+        public async Task<IActionResult> GetAverageRating(int gameId)
+        {
+            var result = await _gameService.GetAverageRatingAsync(gameId);
+            return HandleServiceResult(result);
+        }
     }
 }
