@@ -19,11 +19,25 @@ namespace GameOrganizer.Api.Controllers
         public CollectionController(ICollectionService collectionService) => _collectionService = collectionService;
 
         /// <summary>
-        /// Pobiera listę gier użytkownika. Pozwala na filtrowanie wszystkich gier lub tylko tych z wybranej kolekcji.
+        /// Pobiera listę nazw kolekcji użytkownika
+        /// </summary>
+        [HttpGet("lookup")]
+        [ProducesResponseType(typeof(List<CollectionDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetCollectionsLookup()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var result = await _collectionService.GetUserCollectionsLookupAsync(userId);
+            return HandleServiceResult(result);
+        }
+
+        /// <summary>
+        /// Pobiera kolekcje wraz z grami w formacie paginowanym (DataTables)
         /// </summary>
         /// <param name="request">Parametry tabeli (strona, sortowanie, szukanie).</param>
         /// <param name="collectionId">Opcjonalne ID kolekcji. Jeśli puste, zwraca wszystkie gry użytkownika.</param>
-        [HttpPost("my-collection")]
+        [HttpPost("grouped-with-games")]
         [ProducesResponseType(typeof(DataTableResponse<CollectionWithGamesDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetMyGames([FromBody] DataTableRequest request)
         {

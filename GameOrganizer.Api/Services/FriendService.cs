@@ -249,30 +249,31 @@ namespace GameOrganizer.Api.Services
             if (!areFriends)
                 return ServiceResult<IEnumerable<CollectionWithGamesDto>>.Failure(CommonErrors.Forbidden());
 
-            var viewData = await _context.UserGamesView
-                .Where(v => v.UserId == friendId)
-                .ToListAsync();
-
-            var result = viewData
-                .GroupBy(v => new { v.CollectionId, v.CollectionName })
-                .Select(g => new CollectionWithGamesDto
+            var result = await _context.Collections
+                .Where(c => c.UserId == friendId && c.IsPublic) 
+                .OrderBy(c => c.Name)
+                .Select(c => new CollectionWithGamesDto
                 {
-                    CollectionId = g.Key.CollectionId,
-                    CollectionName = g.Key.CollectionName,
-                    Games = g.Select(item => new UserGameDto
-                    {
-                        GameId = item.GameId,
-                        Title = item.Title,
-                        Description = item.Description,
-                        GenreName = item.GenreName,
-                        PlatformName = item.PlatformName,
-                        CollectionId = item.CollectionId,
-                        CollectionName = item.CollectionName,
-                        AddedAt = item.AddedAt
-                    }).ToList()
-                })
-                .OrderBy(c => c.CollectionName)
-                .ToList();
+                    CollectionId = c.Id,
+                    CollectionName = c.Name,
+                    IsPublic = c.IsPublic,
+                    Games = _context.UserGames
+                        .Where(ug => ug.CollectionId == c.Id)
+                        .Select(ug => new UserGameDto
+                        {
+                            GameId = ug.GameId,
+                            Title = ug.Game.Title,
+                            Description = ug.Game.Description,
+                            GenreName = ug.Game.Genre.Name,
+                            PlatformName = ug.Game.Platform.Name,
+                            CollectionId = c.Id,
+                            CollectionName = c.Name,
+                            AddedAt = ug.AddedAt
+                        })
+                        .OrderBy(g => g.Title)
+                        .ToList()
+                        })
+                .ToListAsync();
 
             return ServiceResult<IEnumerable<CollectionWithGamesDto>>.Success(result);
         }
