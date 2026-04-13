@@ -277,5 +277,51 @@ namespace GameOrganizer.Api.Services
 
             return ServiceResult<IEnumerable<CollectionWithGamesDto>>.Success(result);
         }
+
+        public async Task<ServiceResult<List<GameComparisonDto>>> CompareGamesWithFriendAsync(string currentUserId, string friendId)
+        {
+            var areFriends = await _context.Friendship
+                .AnyAsync(f => ((f.RequesterId == currentUserId && f.ReceiverId == friendId) ||
+                                (f.RequesterId == friendId && f.ReceiverId == currentUserId))
+                               && f.Status == FriendshipStatus.Accepted);
+
+            if (!areFriends) return ServiceResult<List<GameComparisonDto>>.Failure(CommonErrors.Forbidden());
+
+            var myGames = await _context.UserGames
+                .Where(ug => ug.UserId == currentUserId)
+                .Select(ug => new { ug.GameId, ug.Game.Title, ug.Game.Genre.Name, CollectionName = ug.Collection.Name })
+                .ToListAsync();
+
+            var friendGames = await _context.UserGames
+                .Where(ug => ug.UserId == friendId && ug.Collection.IsPublic)
+                .Select(ug => new { ug.GameId, ug.Game.Title, ug.Game.Genre.Name, CollectionName = ug.Collection.Name })
+                .ToListAsync();
+
+            var allGameIds = myGames.Select(g => g.GameId)
+                .Union(friendGames.Select(g => g.GameId))
+                .ToList();
+
+            var comparison = allGameIds.Select(id => {
+                var myInfo = myGames.FirstOrDefault(g => g.GameId == id);
+                var friendInfo = friendGames.FirstOrDefault(g => g.GameId == id);
+
+                var commonInfo = myInfo ?? friendInfo;
+
+                return new GameComparisonDto
+                {
+                    GameId = id,
+                    Title = commonInfo!.Title,
+                    GenreName = commonInfo.Name,
+                    OwnedByMe = myInfo != null,
+                    OwnedByFriend = friendInfo != null,
+                    MyCollectionName = myInfo?.CollectionName,
+                    FriendCollectionName = friendInfo?.CollectionName
+                };
+            })
+            .OrderBy(g => g.Title)
+            .ToList();
+
+            return ServiceResult<List<GameComparisonDto>>.Success(comparison);
+        }
     }
 }

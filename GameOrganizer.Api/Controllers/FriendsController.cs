@@ -93,5 +93,26 @@ namespace GameOrganizer.Api.Controllers
             var result = await _friendService.GetFriendCollectionsWithGamesAsync(currentUserId!, friendId);
             return HandleServiceResult(result);
         }
+
+        /// <summary>
+        /// Porównuje bibliotekę gier zalogowanego użytkownika z publicznymi zbiorami wybranego znajomego.
+        /// </summary>
+        /// <param name="friendId">Unikalny identyfikator znajomego.</param>
+        /// <returns>
+        /// Zwraca zestawienie gier, pozwalające zidentyfikować tytuły wspólne, 
+        /// posiadane tylko przez użytkownika lub tylko przez znajomego.
+        /// </returns>
+        /// <response code="200">Zwraca listę porównawczą gier.</response>
+        /// <response code="401">Użytkownik nie jest zalogowany.</response>
+        /// <response code="403">Użytkownicy nie są znajomymi.</response>
+        [HttpGet("compare/{friendId}")]
+        public async Task<IActionResult> CompareLibraries(string friendId)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
+
+            var result = await _friendService.CompareGamesWithFriendAsync(currentUserId, friendId);
+            return HandleServiceResult(result);
+        }
     }
 }
