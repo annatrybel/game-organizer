@@ -12,5 +12,6 @@ namespace GameOrganizer.Api.Services.Interfaces
         Task<ServiceResult> UpdateCollectionAsync(CollectionDto dto, string userId);
         Task<ServiceResult> DeleteCollectionAsync(int id, string userId);
         Task<ServiceResult<List<CollectionDto>>> GetUserCollectionsLookupAsync(string userId);
+        Task<ServiceResult<SharedCollectionDto>> GetSharedCollectionAsync(Guid shareCode);
     }
 }

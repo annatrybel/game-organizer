@@ -88,5 +88,18 @@ namespace GameOrganizer.Api.Controllers
             var result = await _collectionService.DeleteCollectionAsync(id, userId);
             return HandleServiceResult(result);
         }
+
+        /// <summary>
+        /// Pobiera zawartość kolekcji na podstawie publicznego kodu udostępniania.
+        /// Dostępne dla wszystkich.
+        /// </summary>
+        [AllowAnonymous]
+        [HttpGet("share/{shareCode}")]
+        [ProducesResponseType(typeof(SharedCollectionDto), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetSharedCollection(Guid shareCode)
+        {
+            var result = await _collectionService.GetSharedCollectionAsync(shareCode);
+            return HandleServiceResult(result);
+        }
     }
 }
