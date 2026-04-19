@@ -1,10 +1,12 @@
-﻿using GameOrganizer.Api.Models.DatabaseModels;
+﻿using GameOrganizer.Api.Models;
+using GameOrganizer.Api.Models.DatabaseModels;
 using GameOrganizer.Api.Models.Dto;
 using GameOrganizer.Api.Services.Errors;
 using GameOrganizer.Api.Services.Interfaces;
 using GameOrganizer.Api.Services.Results;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
@@ -24,6 +26,7 @@ namespace GameOrganizer.Api.Services
         private readonly IEmailSender _emailSender;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IFileService _fileService;
+        private readonly GameOrganizerDbContext _context;
         private const string ObjectName = "User";
 
         public AuthService(UserManager<ApplicationUser> userManager,
@@ -34,7 +37,8 @@ namespace GameOrganizer.Api.Services
         IWebHostEnvironment hostingEnvironment, 
         IEmailSender emailSender,
         IHttpContextAccessor httpContextAccessor,
-        IFileService fileService)
+        IFileService fileService,
+        GameOrganizerDbContext context)
         {
             _userManager = userManager;
             _collectionService = collectionService;
@@ -45,6 +49,7 @@ namespace GameOrganizer.Api.Services
             _emailSender = emailSender;
             _httpContextAccessor = httpContextAccessor;
             _fileService = fileService;
+            _context = context;
         }
 
         public async Task<ServiceResult> RegisterAsync(RegisterDto registerDto, bool isAdmin = false)
@@ -315,18 +320,33 @@ namespace GameOrganizer.Api.Services
         public async Task<ServiceResult<UserDto>> GetMe()
         {
             var userPrincipal = _httpContextAccessor.HttpContext?.User;
-            var username = userPrincipal?.Identity?.Name;           
-            if (string.IsNullOrEmpty(username))
+            var userId = userPrincipal?.FindFirstValue(ClaimTypes.NameIdentifier);
+            var roleClaim = userPrincipal?.FindFirstValue(ClaimTypes.Role) ?? "User";
+
+            if (string.IsNullOrEmpty(userId))
             {
-                var userId = userPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
-                return ServiceResult<UserDto>.Failure(CommonErrors.NotFound(ObjectName, userId ?? "Unknown"));
+                return ServiceResult<UserDto>.Failure(CommonErrors.Unauthorized());
             }
 
-            var user = new UserDto
+            var userDto = await _context.Users
+                .Where(u => u.Id == userId)
+                .Select(u => new UserDto
+                {
+                    UserId = u.Id,
+                    UserName = u.UserName ?? "",
+                    Email = u.Email ?? "",
+                    AvatarUrl = u.AvatarUrl,
+                    Bio = u.Bio ?? "",
+                    RoleName = roleClaim 
+                })
+                .FirstOrDefaultAsync();
+                    
+            if (userDto == null)
             {
-                UserName = username
-            };
-            return ServiceResult<UserDto>.Success(user);
+                return ServiceResult<UserDto>.Failure(CommonErrors.NotFound("User", userId));
+            }
+
+            return ServiceResult<UserDto>.Success(userDto);
         }
 
         public async Task<ServiceResult> UpdateProfileAsync(string userId, UpdateProfileDto dto)

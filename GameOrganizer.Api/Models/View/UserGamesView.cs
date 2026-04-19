@@ -11,6 +11,7 @@
         public string PlatformName { get; set; } = null!;
         public int CollectionId { get; set; }
         public string CollectionName { get; set; } = null!;
+        public bool IsPublic { get; set; }
         public DateTime AddedAt { get; set; }
     }
 }

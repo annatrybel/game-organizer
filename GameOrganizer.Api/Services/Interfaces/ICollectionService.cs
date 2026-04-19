@@ -11,5 +11,6 @@ namespace GameOrganizer.Api.Services.Interfaces
         Task<ServiceResult<Collection>> CreateCollectionAsync(CollectionDto dto, string userId);
         Task<ServiceResult> UpdateCollectionAsync(CollectionDto dto, string userId);
         Task<ServiceResult> DeleteCollectionAsync(int id, string userId);
+        Task<ServiceResult<List<CollectionDto>>> GetUserCollectionsLookupAsync(string userId);
     }
 }

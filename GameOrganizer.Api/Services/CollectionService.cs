@@ -61,11 +61,12 @@ namespace GameOrganizer.Api.Services
                 var flatResults = await query.ToListAsync();
 
                 var groupedData = flatResults
-                    .GroupBy(v => new { v.CollectionId, v.CollectionName })
+                    .GroupBy(v => new { v.CollectionId, v.CollectionName, v.IsPublic })
                     .Select(g => new CollectionWithGamesDto
                     {
                         CollectionId = g.Key.CollectionId,
                         CollectionName = g.Key.CollectionName,
+                        IsPublic = g.Key.IsPublic,
                         Games = g.Select(v => new UserGameDto
                         {
                             GameId = v.GameId,
@@ -141,6 +142,22 @@ namespace GameOrganizer.Api.Services
             _context.Collections.Remove(collection);
             await _context.SaveChangesAsync();
             return ServiceResult.Success();
+        }
+
+        public async Task<ServiceResult<List<CollectionDto>>> GetUserCollectionsLookupAsync(string userId)
+        {
+            var collections = await _context.Collections
+                .Where(c => c.UserId == userId)
+                .Select(c => new CollectionDto
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    IsPublic = c.IsPublic
+                })
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            return ServiceResult<List<CollectionDto>>.Success(collections);
         }
     }
 }
