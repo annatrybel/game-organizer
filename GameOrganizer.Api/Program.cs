@@ -163,6 +163,7 @@ builder.Services.AddScoped<IGameService, GameService>();
 builder.Services.AddScoped<IFileService, CloudinaryService>();
 builder.Services.AddScoped<ICollectionService, CollectionService>();
 builder.Services.AddScoped<IFriendService, FriendService>();
+builder.Services.AddScoped<IStatsService, StatsService>();
 
 
 builder.Services.AddControllers();
