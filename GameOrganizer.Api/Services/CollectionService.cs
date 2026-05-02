@@ -159,6 +159,44 @@ namespace GameOrganizer.Api.Services
 
             return ServiceResult<List<CollectionDto>>.Success(collections);
         }
+
+        public async Task<ServiceResult<SharedCollectionDto>> GetSharedCollectionAsync(Guid shareCode)
+        {
+            var collection = await _context.Collections
+                .Include(c => c.User)
+                .Include(c => c.UserGames)
+                    .ThenInclude(ug => ug.Game)
+                        .ThenInclude(g => g.Genre)
+                .Include(c => c.UserGames)
+                    .ThenInclude(ug => ug.Game)
+                        .ThenInclude(g => g.Platform)
+                .FirstOrDefaultAsync(c => c.ShareCode == shareCode && c.IsPublic); 
+
+            if (collection == null)
+            {
+                return ServiceResult<SharedCollectionDto>.Failure(
+                    new ServiceError("Collection.NotShared", "Ta kolekcja nie została udostępniona lub jest prywatna.")
+                );
+            }
+
+            var dto = new SharedCollectionDto
+            {
+                CollectionName = collection.Name,
+                OwnerName = collection.User.UserName ?? "Anonimowy Użytkownik",
+                Games = collection.UserGames.Select(ug => new UserGameDto
+                {
+                    GameId = ug.GameId,
+                    Title = ug.Game.Title,
+                    GenreName = ug.Game.Genre.Name,
+                    PlatformName = ug.Game.Platform.Name,
+                    AddedAt = ug.AddedAt
+                })
+                .OrderBy(g => g.Title)
+                .ToList()
+            };
+
+            return ServiceResult<SharedCollectionDto>.Success(dto);
+        }
     }
 }
 
