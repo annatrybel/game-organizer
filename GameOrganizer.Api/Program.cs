@@ -5,6 +5,7 @@ using GameOrganizer.Api.Seeders;
 using GameOrganizer.Api.Services;
 using GameOrganizer.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -112,13 +113,22 @@ builder.Services.AddAuthentication(options =>
 });
 
 
-var frontendUrl = builder.Configuration["FRONTEND_BASE_URL"] ?? "http://localhost:3000";
+var frontendUrl = builder.Configuration["FRONTEND_BASE_URL"];
+var additionalOrigins = builder.Configuration["ALLOWED_ORIGINS"]?
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    ?? Array.Empty<string>();
+
+var allAllowedOrigins = additionalOrigins
+    .Concat(new[] { frontendUrl })
+    .Where(url => !string.IsNullOrEmpty(url))
+    .Distinct()
+    .ToArray();
 
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins(frontendUrl)
+        policy.WithOrigins(allAllowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials(); 
@@ -132,8 +142,18 @@ builder.Services.AddRateLimiter(options =>
         opt.Window = TimeSpan.FromMinutes(1); // Okno czasu
         opt.PermitLimit = 5;                  // Maksymalnie 5 żądań
         opt.QueueLimit = 0;                   // Brak kolejkowania
-        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
     });
+
+    // limit liczony dla każdego urządzenia osobno
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? httpContext.Request.Headers.Host.ToString(),
+            factory: partition => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 60, // 60 zapytań na minutę na 1 adres IP
+                Window = TimeSpan.FromMinutes(1)
+            }));
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
@@ -219,27 +239,41 @@ app.UseForwardedHeaders(forwardedHeadersOptions);
 
 // Polityka nagłówków
 var policyCollection = new HeaderPolicyCollection()
-    .AddDefaultSecurityHeaders() 
-    .AddContentSecurityPolicy(builder =>
+    .AddDefaultSecurityHeaders()
+    .AddContentSecurityPolicy(csp =>
     {
-        builder.AddDefaultSrc().Self();
+        csp.AddDefaultSrc().Self();
 
-        builder.AddConnectSrc().Self().From("https://localhost:7128");
+        var connectSrc = csp.AddConnectSrc()
+            .Self()
+            .From("https://localhost:7128");
+
+        var issuer = builder.Configuration["JWT:Issuer"];
+        if (!string.IsNullOrEmpty(issuer))
+        {
+            connectSrc.From(issuer);
+        }
 
         if (app.Environment.IsDevelopment())
         {
-            builder.AddStyleSrc().Self().UnsafeInline();
-            builder.AddScriptSrc().Self().UnsafeInline();
+   
+            csp.AddStyleSrc().Self().UnsafeInline();
+            csp.AddScriptSrc().Self().UnsafeInline();
+        }
+        else
+        {
+            csp.AddStyleSrc().Self();
+            csp.AddScriptSrc().Self();
         }
     })
-    .AddCustomHeader("X-Permitted-Cross-Domain-Policies", "none") 
-    .AddPermissionsPolicy(builder =>
+    .AddCustomHeader("X-Permitted-Cross-Domain-Policies", "none")
+    .AddPermissionsPolicy(p => 
     {
-        builder.AddCamera().None();
-        builder.AddMicrophone().None();
-        builder.AddGeolocation().None();
+        p.AddCamera().None();
+        p.AddMicrophone().None();
+        p.AddGeolocation().None();
     })
-    .RemoveServerHeader(); 
+    .RemoveServerHeader();
 
 // Middleware
 app.UseSecurityHeaders(policyCollection);
