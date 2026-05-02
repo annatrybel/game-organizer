@@ -17,8 +17,6 @@ Aplikacja webowa do zarządzania kolekcją gier wideo. Umożliwia użytkownikom 
 - [Baza danych](#baza-danych)
 - [Real-time (SignalR)](#real-time-signalr)
 
----
-
 ## Funkcje
 
 - **Biblioteka gier** – przeglądanie i przeszukiwanie globalnej bazy gier
@@ -30,8 +28,6 @@ Aplikacja webowa do zarządzania kolekcją gier wideo. Umożliwia użytkownikom 
 - **Statystyki** – podgląd statystyk własnej biblioteki oraz danych globalnych
 - **Panel administratora** – zarządzanie użytkownikami, przeglądanie logów historii, moderacja gier
 - **Uwierzytelnianie** – JWT + OAuth2 (Google)
-
----
 
 ## Technologie
 
@@ -46,9 +42,6 @@ Aplikacja webowa do zarządzania kolekcją gier wideo. Umożliwia użytkownikom 
 | Monitoring | Sentry |
 | Dokumentacja API | Swagger / OpenAPI |
 | Konteneryzacja | Docker + Docker Compose |
-| Security headers | NetEscapades.AspNetCore.SecurityHeaders |
-
----
 
 ## Architektura
 
@@ -65,21 +58,10 @@ GameOrganizer.Api/
 ├── Sentry/              # Konfiguracja monitoringu
 └── Templates/           # Szablony emaili (HTML)
 ```
-
-**Wzorce:**
-- Repository / Service Layer
-- DTO (Data Transfer Objects) – separacja modeli domeny od API
-- Automatyczny audit log – każda zmiana danych zapisywana w tabeli `HistoryLog`
-- DataTable pattern – paginacja / filtrowanie / sortowanie dla widoków tabelarycznych
-
----
-
 ## Wymagania
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (do uruchomienia przez Docker)
 - **lub** .NET SDK 9.0 + PostgreSQL 17 (do uruchomienia lokalnego)
-
----
 
 ## Uruchomienie
 
@@ -120,8 +102,6 @@ GameOrganizer.Api/
    dotnet run --project GameOrganizer.Api
    ```
 
----
-
 ## Konfiguracja
 
 Aplikacja wczytuje konfigurację z pliku `.env` (w Dockerze) lub zmiennych środowiskowych / `appsettings.json`.
@@ -142,8 +122,6 @@ Aplikacja wczytuje konfigurację z pliku `.env` (w Dockerze) lub zmiennych środ
 | `FRONTEND_URL` | URL frontendu (dla CORS i przekierowań OAuth) |
 
 > Zmienna `IS_IN_CONTAINER=true` jest ustawiana automatycznie przez Docker Compose i decyduje, który connection string zostanie użyty.
-
----
 
 ## API Endpoints
 
@@ -234,7 +212,6 @@ Aplikacja wczytuje konfigurację z pliku `.env` (w Dockerze) lub zmiennych środ
 | `GET /healthz` | Health check |
 | `/swagger` | Dokumentacja API (tylko Development) |
 
----
 
 ## Autoryzacja
 
@@ -250,34 +227,6 @@ Aplikacja wczytuje konfigurację z pliku `.env` (w Dockerze) lub zmiennych środ
 - Endpoint logowania jest objęty rate limitingiem (5 prób na minutę)
 - SignalR wymaga tokenu JWT przekazanego jako query string: `?access_token=<token>`
 
----
-
-## Baza danych
-
-Schemat bazodanowy jest zarządzany przez migracje Entity Framework Core. Poniżej najważniejsze tabele:
-
-| Tabela | Opis |
-|--------|------|
-| `AspNetUsers` | Użytkownicy (rozszerzenie Identity) |
-| `Games` | Gry w globalnej bazie |
-| `Genres` | Gatunki gier |
-| `Platforms` | Platformy (PC, PS5, Xbox, Switch…) |
-| `Collections` | Kolekcje użytkowników |
-| `UserGames` | Powiązania użytkownik–gra–kolekcja |
-| `Friendships` | Zaproszenia i relacje znajomych |
-| `ChatGroups` | Grupy czatu |
-| `ChatGroupMembers` | Członkowie grup czatu |
-| `ChatMessages` | Wiadomości czatu |
-| `HistoryLogs` | Automatyczny log zmian (audit trail) |
-| `Notifications` | Powiadomienia dla użytkowników |
-| `UserRatings` | Oceny gier przez użytkowników |
-
-### Widoki bazodanowe
-
-- `UserWithRoles` – dane użytkownika z przypisanymi rolami
-- `UserGamesView` – zmaterializowany widok gier użytkownika z detalami kolekcji
-
----
 
 ## Real-time (SignalR)
 
