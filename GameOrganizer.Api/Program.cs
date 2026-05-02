@@ -70,6 +70,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 // czat
 builder.Services.AddSignalR();
 
+builder.Services.AddMemoryCache();
 
 // Konfiguracja uwierzytelniania oparta o JWT (tokeny)
 builder.Services.AddAuthentication(options =>
