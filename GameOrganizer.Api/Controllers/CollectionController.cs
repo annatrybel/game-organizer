@@ -101,5 +101,35 @@ namespace GameOrganizer.Api.Controllers
             var result = await _collectionService.GetSharedCollectionAsync(shareCode);
             return HandleServiceResult(result);
         }
+
+        /// <summary>
+        /// Udostępnia publiczną kolekcję gier innemu użytkownikowi za pomocą wiadomości e-mail.
+        /// </summary>
+        /// <remarks>
+        /// Metoda generuje unikalny link do kolekcji na podstawie jej kodu ShareCode i wysyła go na podany adres.
+        /// Kolekcja musi mieć status "Publiczna", aby wysłanie było możliwe.
+        /// </remarks>
+        /// <param name="id">Unikalny identyfikator (ID) kolekcji, którą chcesz udostępnić.</param>
+        /// <param name="recipientEmail">Adres e-mail osoby, do której ma trafić zaproszenie.</param>
+        /// <returns>Zwraca status 200 OK przy powodzeniu lub 400 Bad Request, jeśli kolekcja jest prywatna.</returns>
+        /// <response code="200">Wiadomość e-mail została pomyślnie wysłana.</response>
+        /// <response code="400">Błąd walidacji (np. próba udostępnienia kolekcji prywatnej).</response>
+        /// <response code="401">Użytkownik nie jest zalogowany.</response>
+        /// <response code="404">Kolekcja o podanym ID nie istnieje lub nie należy do zalogowanego użytkownika.</response>
+        [HttpPost("{id}/share-email")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> ShareCollectionByEmail(int id, [FromQuery] string recipientEmail)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var result = await _collectionService.ShareCollectionByEmailAsync(id, userId, recipientEmail);
+            return HandleServiceResult(result);
+        }
     }
 }
