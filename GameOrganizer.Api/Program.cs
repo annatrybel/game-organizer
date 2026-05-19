@@ -5,7 +5,6 @@ using GameOrganizer.Api.Seeders;
 using GameOrganizer.Api.Services;
 using GameOrganizer.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -114,7 +113,7 @@ app.Run();
 
 
 // ==========================================
-// METODY POMOCNICZE                                         // to do przeniesc do pliku Extention
+// METODY POMOCNICZE                                         // TO DO przeniesc do pliku Extention
 // ==========================================
 
 void LoadDotEnv()

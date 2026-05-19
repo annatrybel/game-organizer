@@ -55,15 +55,33 @@ namespace GameOrganizer.Api.Services
                 (f.RequesterId == targetUser.Id && f.ReceiverId == requesterId));
 
             if (existing != null)
-                return ServiceResult.Failure(new ServiceError("Friends.AlreadyExists", "Zaproszenie już istnieje lub jesteście znajomymi."));
+            {
+                if (existing.Status == FriendshipStatus.Accepted)
+                    return ServiceResult.Failure(new ServiceError("Friends.AlreadyFriends", "Jesteście już znajomymi."));
 
-            var friendship = new Friendship {
-                RequesterId = requesterId, 
-                ReceiverId = targetUser.Id,
-                Status = FriendshipStatus.Pending
-            };
+                if (existing.Status == FriendshipStatus.Pending)
+                {
+                    if (existing.RequesterId == requesterId)
+                        return ServiceResult.Failure(new ServiceError("Friends.AlreadySent", "Zaproszenie zostało już wysłane i oczekuje na odpowiedź."));
+                    else
+                        return ServiceResult.Failure(new ServiceError("Friends.PendingReceived", "Ten użytkownik wysłał już zaproszenie do Ciebie. Zaakceptuj je w zakładce powiadomień."));
+                }
 
-            _context.Friendship.Add(friendship);
+                existing.Status = FriendshipStatus.Pending;
+                existing.RequesterId = requesterId;
+                existing.ReceiverId = targetUser.Id;
+                _context.Friendship.Update(existing);
+            }
+            else
+            {
+                var friendship = new Friendship
+                {
+                    RequesterId = requesterId,
+                    ReceiverId = targetUser.Id,
+                    Status = FriendshipStatus.Pending
+                };
+                _context.Friendship.Add(friendship);
+            }
 
             var notification = new Notification
             {
