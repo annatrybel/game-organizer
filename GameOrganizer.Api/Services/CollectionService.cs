@@ -1,23 +1,44 @@
-﻿using GameOrganizer.Api.Models;
-using GameOrganizer.Api.Models.View;
+﻿using GameOrganizer.Api.Hubs;
+using GameOrganizer.Api.Models;
 using GameOrganizer.Api.Models.DatabaseModels;
 using GameOrganizer.Api.Models.Dto;
 using GameOrganizer.Api.Services.Errors;
 using GameOrganizer.Api.Services.Interfaces;
 using GameOrganizer.Api.Services.Results;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Dynamic.Core;
+
 
 namespace GameOrganizer.Api.Services
 {
     public class CollectionService : ICollectionService
     {
         private readonly GameOrganizerDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly IConfiguration _configuration;
+        private readonly IEmailSender _emailSender;
+        private readonly ILogger<FriendService> _logger;
+        private readonly IWebHostEnvironment _hostingEnvironment;
         private const string ObjectName = "Collection";
 
-        public CollectionService(GameOrganizerDbContext context)
+        public CollectionService(GameOrganizerDbContext context, UserManager<ApplicationUser> userManager,
+            IHubContext<NotificationHub> hubContex,
+            IConfiguration configuration,
+            IEmailSender emailSender,
+            ILogger<FriendService> logger,
+            IWebHostEnvironment hostingEnvironment)
         {
             _context = context;
+            _userManager = userManager;
+            _hubContext = hubContex;
+            _configuration = configuration;
+            _emailSender = emailSender;
+            _logger = logger;
+            _hostingEnvironment = hostingEnvironment;
         }
         public async Task<ServiceResult> InitDefaultCollectionsAsync(string userId)
         {
@@ -197,6 +218,48 @@ namespace GameOrganizer.Api.Services
 
             return ServiceResult<SharedCollectionDto>.Success(dto);
         }
+
+        public async Task<ServiceResult> ShareCollectionByEmailAsync(int collectionId, string ownerId, string recipientEmail)
+        {
+            var collection = await _context.Collections
+                .FirstOrDefaultAsync(c => c.Id == collectionId && c.UserId == ownerId);
+
+            if (collection == null) return ServiceResult.Failure(CommonErrors.NotFound("Kolekcja", collectionId));
+
+            if (!collection.IsPublic)
+            {
+                return ServiceResult.Failure(new ServiceError(
+                    "Collection.Private",
+                    "Nie można udostępnić kolekcji prywatnej. Najpierw zmień status kolekcji na publiczny."
+                ));
+            }
+
+            var owner = await _userManager.FindByIdAsync(ownerId);
+            var baseUrl = _configuration["FRONTEND_BASE_URL"] ?? "http://localhost:5173";
+
+            var shareUrl = $"{baseUrl}/shared-collection/{collection.ShareCode}";
+
+            try
+            {
+                var templatePath = Path.Combine(_hostingEnvironment.ContentRootPath, "Templates", "ShareCollectionEmail.html");
+                var emailBody = await File.ReadAllTextAsync(templatePath);
+
+                emailBody = emailBody.Replace("{SenderName}", owner?.UserName ?? "Znajomy")
+                                     .Replace("{ShareUrl}",  shareUrl);
+
+                var subject = $"{owner?.UserName} udostępnił Ci swoją kolekcję gier!";
+
+                await _emailSender.SendEmailAsync(recipientEmail, subject, emailBody);
+
+                return ServiceResult.Success();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Błąd podczas wysyłania linku do kolekcji");
+                return ServiceResult.Failure(new ServiceError("Email.Failed", "Nie udało się wysłać maila z kolekcją."));
+            }
+        }
+
     }
 }
 
