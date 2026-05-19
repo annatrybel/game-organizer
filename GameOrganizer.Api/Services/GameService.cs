@@ -1,9 +1,11 @@
-﻿using GameOrganizer.Api.Models;
+﻿using GameOrganizer.Api.Hubs;
+using GameOrganizer.Api.Models;
 using GameOrganizer.Api.Models.DatabaseModels;
 using GameOrganizer.Api.Models.Dto;
 using GameOrganizer.Api.Services.Errors;
 using GameOrganizer.Api.Services.Interfaces;
 using GameOrganizer.Api.Services.Results;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Dynamic.Core;
 
@@ -13,12 +15,14 @@ namespace GameOrganizer.Api.Services
     {
         private readonly GameOrganizerDbContext _context;
         private readonly IFileService _fileService;
+        private readonly IHubContext<NotificationHub> _hubContext;
         private const string ObjectName = "Game";
 
-        public GameService(GameOrganizerDbContext context, IFileService fileService)
+        public GameService(GameOrganizerDbContext context, IFileService fileService, IHubContext<NotificationHub> hubContext)
         {
             _context = context;
             _fileService = fileService;
+            _hubContext = hubContext;
         }
 
         public async Task<ServiceResult> AddToUserCollectionAsync(int gameId, int collectionId, string userId)
@@ -113,6 +117,17 @@ namespace GameOrganizer.Api.Services
 
             game.Status = GameStatus.Accepted;
             await _context.SaveChangesAsync();
+
+            if (game.SuggestedByUserId != null)
+            {
+                await _hubContext.Clients.User(game.SuggestedByUserId).SendAsync("ReceiveNotification", new
+                {
+                    message = $"Administrator zaakceptował Twoją propozycję gry: {game.Title}",
+                    type = "GameApproval",
+                    gameId = game.Id
+                });
+            }
+
             return ServiceResult.Success();
         }
 
@@ -133,6 +148,23 @@ namespace GameOrganizer.Api.Services
             //    await _fileService.DeleteImageAsync(game.ImageUrl);
             //    game.ImageUrl = null;
             //}
+
+            if (game.SuggestedByUserId != null)
+            {
+                string message = $"Twoja propozycja gry '{game.Title}' została odrzucona.";
+                if (!string.IsNullOrEmpty(reason))
+                {
+                    message += $" Powód: {reason}";
+                }
+
+                await _hubContext.Clients.User(game.SuggestedByUserId).SendAsync("ReceiveNotification", new
+                {
+                    message = message,
+                    type = "GameRejection",
+                    gameId = game.Id
+                });
+            }
+
 
             await _context.SaveChangesAsync();
             return ServiceResult.Success();
