@@ -2,7 +2,15 @@ using GameOrganizer.Api.Models;
 using GameOrganizer.Api.Models.DatabaseModels;
 using GameOrganizer.Api.Models.Dto;
 using GameOrganizer.Api.Services;
+using GameOrganizer.Api.Hubs;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace Tests;
 
@@ -20,7 +28,24 @@ public class CollectionServiceTests
             .Options;
 
         _dbContext = new GameOrganizerDbContext(options);
-        _service = new CollectionService(_dbContext);
+
+        var store = new Mock<IUserStore<ApplicationUser>>();
+        var userManager = new Mock<UserManager<ApplicationUser>>(
+            store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
+        var hubContext = new Mock<IHubContext<NotificationHub>>();
+        var configuration = new Mock<IConfiguration>();
+        var emailSender = new Mock<IEmailSender>();
+        var logger = new Mock<ILogger<FriendService>>();
+        var hostingEnvironment = new Mock<IWebHostEnvironment>();
+
+        _service = new CollectionService(
+            _dbContext,
+            userManager.Object,
+            hubContext.Object,
+            configuration.Object,
+            emailSender.Object,
+            logger.Object,
+            hostingEnvironment.Object);
     }
 
     [TearDown]

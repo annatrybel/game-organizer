@@ -3,6 +3,8 @@ using GameOrganizer.Api.Models.DatabaseModels;
 using GameOrganizer.Api.Models.Dto;
 using GameOrganizer.Api.Services;
 using GameOrganizer.Api.Services.Interfaces;
+using GameOrganizer.Api.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 
@@ -13,6 +15,9 @@ namespace Tests
     {
         private GameOrganizerDbContext _dbContext = null!;
         private Mock<IFileService> _fileServiceMock = null!;
+        private Mock<IHubContext<NotificationHub>> _hubContextMock = null!;
+        private Mock<IHubClients> _hubClientsMock = null!;
+        private Mock<IClientProxy> _clientProxyMock = null!;
         private GameService _gameService = null!;
 
         [SetUp]
@@ -23,7 +28,17 @@ namespace Tests
                 .Options;
             _dbContext = new GameOrganizerDbContext(options);
             _fileServiceMock = new Mock<IFileService>();
-            _gameService = new GameService(_dbContext, _fileServiceMock.Object);
+            _hubContextMock = new Mock<IHubContext<NotificationHub>>();
+            _hubClientsMock = new Mock<IHubClients>();
+            _clientProxyMock = new Mock<IClientProxy>();
+
+            _hubContextMock.Setup(x => x.Clients).Returns(_hubClientsMock.Object);
+            _hubClientsMock.Setup(x => x.User(It.IsAny<string>())).Returns(_clientProxyMock.Object);
+            _clientProxyMock
+                .Setup(x => x.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            _gameService = new GameService(_dbContext, _fileServiceMock.Object, _hubContextMock.Object);
         }
 
         [TearDown]
