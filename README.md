@@ -1,6 +1,6 @@
 # GameOrganizer
 
-Aplikacja webowa do zarządzania kolekcją gier wideo. Umożliwia użytkownikom śledzenie biblioteki gier, tworzenie własnych kolekcji, porównywanie zbiorów ze znajomymi oraz komunikację w czasie rzeczywistym.
+Aplikacja webowa do zarządzania kolekcją gier. Umożliwia użytkownikom śledzenie biblioteki gier, tworzenie własnych kolekcji, porównywanie zbiorów ze znajomymi oraz komunikację w czasie rzeczywistym.
 
 ## Spis treści
 
@@ -92,15 +92,17 @@ GameOrganizer.Api/
 
 2. Uzupełnij `appsettings.Development.json` lub zmienne środowiskowe (patrz [Konfiguracja](#konfiguracja)).
 
-3. Zastosuj migracje:
+3. Uruchom aplikację:
+   ```bash
+   dotnet run --project GameOrganizer.Api
+   ```
+
+4. (Opcjonalnie) Zastosuj migracje ręcznie tylko gdy potrzebujesz uruchomić je poza startem aplikacji:
    ```bash
    dotnet ef database update --project GameOrganizer.Api
    ```
 
-4. Uruchom aplikację:
-   ```bash
-   dotnet run --project GameOrganizer.Api
-   ```
+> Migracje EF Core są wykonywane automatycznie przy starcie aplikacji (`Database.Migrate()`).
 
 ## Konfiguracja
 
@@ -119,7 +121,8 @@ Aplikacja wczytuje konfigurację z pliku `.env` (w Dockerze) lub zmiennych środ
 | `CLOUDINARY_API_KEY` | Klucz API Cloudinary |
 | `CLOUDINARY_API_SECRET` | Sekret API Cloudinary |
 | `Sentry__Dsn` | DSN do projektu Sentry |
-| `FRONTEND_URL` | URL frontendu (dla CORS i przekierowań OAuth) |
+| `FRONTEND_BASE_URL` | Bazowy URL frontendu (redirect OAuth, linki w mailach, CORS) |
+| `ALLOWED_ORIGINS` | Dodatkowe originy CORS (lista rozdzielona przecinkami) |
 
 > Zmienna `IS_IN_CONTAINER=true` jest ustawiana automatycznie przez Docker Compose i decyduje, który connection string zostanie użyty.
 
