@@ -17,6 +17,7 @@ namespace GameOrganizer.Api.Models.Dto
         public string RoleId { get; set; } = string.Empty;
         public string RoleName { get; set; } = string.Empty;
         public bool IsLocked { get; set; }
+        public string InvitationCode { get; set; }
         public List<IdentityRole> AvailableRoles { get; set; } = new List<IdentityRole>();
     }
 
