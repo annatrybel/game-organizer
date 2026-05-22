@@ -1,4 +1,4 @@
-﻿namespace GameOrganizer.Api.Models.Dto
+﻿namespace GameOrganizer.Api.Models.Dto.Auth
 {
     public class LoginResponse
     {

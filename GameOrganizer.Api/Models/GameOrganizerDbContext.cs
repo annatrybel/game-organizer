@@ -1,5 +1,4 @@
 ﻿using GameOrganizer.Api.Models.DatabaseModels;
-using GameOrganizer.Api.Models.Dto;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using System.Security.Claims;
 using System.Text.Json;
 using GameOrganizer.Api.Models.View;
+using GameOrganizer.Api.Models.Dto.Users;
 
 namespace GameOrganizer.Api.Models
 {

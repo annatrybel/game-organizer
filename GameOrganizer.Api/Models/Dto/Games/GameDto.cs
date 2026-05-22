@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace GameOrganizer.Api.Models.Dto
+namespace GameOrganizer.Api.Models.Dto.Games
 {
     public class GameDto
     {

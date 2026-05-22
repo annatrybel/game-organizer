@@ -1,4 +1,7 @@
 ﻿using GameOrganizer.Api.Models.Dto;
+using GameOrganizer.Api.Models.Dto.Collections;
+using GameOrganizer.Api.Models.Dto.Games;
+using GameOrganizer.Api.Models.Dto.Users;
 using GameOrganizer.Api.Services.Results;
 
 namespace GameOrganizer.Api.Services.Interfaces

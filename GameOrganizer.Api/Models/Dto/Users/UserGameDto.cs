@@ -1,4 +1,4 @@
-﻿namespace GameOrganizer.Api.Models.Dto
+﻿namespace GameOrganizer.Api.Models.Dto.Users
 {
     public class UserGameDto
     {
@@ -12,5 +12,8 @@
         public int CollectionId { get; set; }
         public string CollectionName { get; set; } = string.Empty;
         public DateTime AddedAt { get; set; }
+
+        public double AverageRating { get; set; } 
+        public int? MyRating { get; set; }
     }
 }

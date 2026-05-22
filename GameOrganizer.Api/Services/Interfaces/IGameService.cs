@@ -1,5 +1,6 @@
 ﻿using GameOrganizer.Api.Models.DatabaseModels;
 using GameOrganizer.Api.Models.Dto;
+using GameOrganizer.Api.Models.Dto.Games;
 using GameOrganizer.Api.Services.Results;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,7 +16,7 @@ namespace GameOrganizer.Api.Services.Interfaces
         Task<ServiceResult<Game>> ProposeNewGameAsync(GameDto dto, string userId);
         Task<ServiceResult> AcceptGameAsync(int gameId);
         Task<ServiceResult> RejectGameAsync(int gameId, string? reason);
-        Task<ServiceResult<DataTableResponse<Game>>> GetAvailableGamesAsync(DataTableRequest request);
+        Task<ServiceResult<DataTableResponse<GameDisplayDto>>> GetAvailableGamesAsync(DataTableRequest request, string? currentUserId);
         Task<ServiceResult<IEnumerable<Game>>> GetPendingAsync();
         Task<ServiceResult<IEnumerable<Genre>>> GetAllGenresAsync();
         Task<ServiceResult> RemoveFromCollectionAsync(int gameId, string userId);

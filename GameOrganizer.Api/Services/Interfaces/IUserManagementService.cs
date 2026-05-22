@@ -1,4 +1,5 @@
 ﻿using GameOrganizer.Api.Models.Dto;
+using GameOrganizer.Api.Models.Dto.Users;
 using GameOrganizer.Api.Services.Results;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;

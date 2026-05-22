@@ -2,6 +2,7 @@
 using GameOrganizer.Api.Models;
 using GameOrganizer.Api.Models.DatabaseModels;
 using GameOrganizer.Api.Models.Dto;
+using GameOrganizer.Api.Models.Dto.Games;
 using GameOrganizer.Api.Services.Errors;
 using GameOrganizer.Api.Services.Interfaces;
 using GameOrganizer.Api.Services.Results;
@@ -170,12 +171,11 @@ namespace GameOrganizer.Api.Services
             return ServiceResult.Success();
         }
 
-        public async Task<ServiceResult<DataTableResponse<Game>>> GetAvailableGamesAsync(DataTableRequest request)
+        public async Task<ServiceResult<DataTableResponse<GameDisplayDto>>> GetAvailableGamesAsync(DataTableRequest request, string? currentUserId)
         {
             try
             {
                 string[] columnNames = { "Title", "Genre.Name", "Platform.Name", "Description" };
-
                 string sortColumn = (request.OrderColumn >= 0 && request.OrderColumn < columnNames.Length)
                     ? columnNames[request.OrderColumn]
                     : "Title";
@@ -186,7 +186,8 @@ namespace GameOrganizer.Api.Services
                     .Where(g => g.Status == GameStatus.Accepted)
                     .AsQueryable();
 
-                var totalRecords = await baseQuery.CountAsync();
+                var totalRecords = await _context.Games.CountAsync(g => g.Status == GameStatus.Accepted);
+
                 if (!string.IsNullOrEmpty(request.SearchValue))
                 {
                     string searchValueLower = request.SearchValue.ToLower();
@@ -194,7 +195,7 @@ namespace GameOrganizer.Api.Services
                         g.Title.ToLower().Contains(searchValueLower) ||
                         (g.Description != null && g.Description.ToLower().Contains(searchValueLower)) ||
                         g.Genre.Name.ToLower().Contains(searchValueLower) ||
-                        g.Platform.Name.ToLower().Contains(searchValueLower)); 
+                        g.Platform.Name.ToLower().Contains(searchValueLower));
                 }
 
                 var recordsFiltered = await baseQuery.CountAsync();
@@ -204,12 +205,33 @@ namespace GameOrganizer.Api.Services
                     baseQuery = baseQuery.OrderBy(sortColumn + " " + request.OrderDir);
                 }
 
-                var data = await baseQuery
+                var dataQuery = baseQuery.Select(g => new GameDisplayDto
+                {
+                    Id = g.Id,
+                    Title = g.Title,
+                    Description = g.Description,
+                    GenreId = g.GenreId,
+                    GenreName = g.Genre.Name,
+                    PlatformId = g.PlatformId,
+                    PlatformName = g.Platform.Name,
+                    ImageUrl = g.ImageUrl,
+                    AverageRating = _context.UserRating
+                        .Where(r => r.GameId == g.Id)
+                        .Average(r => (double?)r.Value) ?? 0,
+                    MyRating = currentUserId == null ? null : _context.UserRating
+                        .Where(r => r.GameId == g.Id && r.UserId == currentUserId)
+                        .Select(r => (int?)r.Value)
+                        .FirstOrDefault()
+                });
+
+                var data = await dataQuery
                     .Skip(request.Start)
                     .Take(request.Length)
                     .ToListAsync();
 
-                return ServiceResult<DataTableResponse<Game>>.Success(new DataTableResponse<Game>
+                data.ForEach(x => x.AverageRating = Math.Round(x.AverageRating, 1));
+
+                return ServiceResult<DataTableResponse<GameDisplayDto>>.Success(new DataTableResponse<GameDisplayDto>
                 {
                     Draw = request.Draw,
                     RecordsTotal = totalRecords,
@@ -219,7 +241,7 @@ namespace GameOrganizer.Api.Services
             }
             catch (Exception ex)
             {
-                return ServiceResult<DataTableResponse<Game>>.Failure(CommonErrors.DataProcessingError());
+                return ServiceResult<DataTableResponse<GameDisplayDto>>.Failure(CommonErrors.DataProcessingError());
             }
         }
 
@@ -360,6 +382,28 @@ namespace GameOrganizer.Api.Services
                 _context.UserRating.Add(newRating);
             }
 
+            if (rating == 10)
+            {
+                var favoriteCollection = await _context.Collections
+                    .FirstOrDefaultAsync(c => c.UserId == userId && c.Name == "Ulubione");
+
+                if (favoriteCollection != null)
+                {
+                    var userGame = await _context.UserGames
+                        .FirstOrDefaultAsync(ug => ug.UserId == userId && ug.GameId == gameId);
+
+                    if (userGame == null)
+                    {
+                        _context.UserGames.Add(new UserGame
+                        {
+                            UserId = userId,
+                            GameId = gameId,
+                            CollectionId = favoriteCollection.Id,
+                            AddedAt = DateTime.UtcNow
+                        });
+                    }
+                }
+            }
             await _context.SaveChangesAsync();
             return ServiceResult.Success();
         }

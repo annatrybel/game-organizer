@@ -2,6 +2,7 @@
 using GameOrganizer.Api.Models;
 using GameOrganizer.Api.Models.DatabaseModels;
 using GameOrganizer.Api.Models.Dto;
+using GameOrganizer.Api.Models.Dto.Collections;
 using GameOrganizer.Api.Services.Errors;
 using GameOrganizer.Api.Services.Interfaces;
 using GameOrganizer.Api.Services.Results;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Dynamic.Core;
+using GameOrganizer.Api.Models.Dto.Users;
 
 
 namespace GameOrganizer.Api.Services
@@ -81,6 +83,18 @@ namespace GameOrganizer.Api.Services
 
                 var flatResults = await query.ToListAsync();
 
+                var gameIds = flatResults.Select(f => f.GameId).Distinct().ToList();
+
+                var averages = await _context.UserRating
+                    .Where(r => gameIds.Contains(r.GameId))
+                    .GroupBy(r => r.GameId)
+                    .Select(g => new { GameId = g.Key, Avg = g.Average(r => (double)r.Value) })
+                    .ToDictionaryAsync(x => x.GameId, x => Math.Round(x.Avg, 1));
+
+                var myRatings = await _context.UserRating
+                    .Where(r => gameIds.Contains(r.GameId) && r.UserId == userId)
+                    .ToDictionaryAsync(x => x.GameId, x => x.Value);
+
                 var groupedData = flatResults
                     .GroupBy(v => new { v.CollectionId, v.CollectionName, v.IsPublic })
                     .Select(g => new CollectionWithGamesDto
@@ -94,7 +108,9 @@ namespace GameOrganizer.Api.Services
                             Title = v.Title,
                             GenreName = v.GenreName,
                             PlatformName = v.PlatformName,
-                            AddedAt = v.AddedAt
+                            AddedAt = v.AddedAt,
+                            AverageRating = averages.ContainsKey(v.GameId) ? averages[v.GameId] : 0,
+                            MyRating = myRatings.ContainsKey(v.GameId) ? myRatings[v.GameId] : (int?)null
                         }).OrderBy(x => x.Title).ToList()
                     })
                     .AsQueryable();

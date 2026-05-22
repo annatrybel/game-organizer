@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 
-namespace GameOrganizer.Api.Models.Dto
+namespace GameOrganizer.Api.Models.Dto.Users
 {
     public class UserDto
     {
