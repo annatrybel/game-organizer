@@ -1,4 +1,6 @@
-﻿namespace GameOrganizer.Api.Models.Dto
+﻿using GameOrganizer.Api.Models.Dto.Users;
+
+namespace GameOrganizer.Api.Models.Dto.Collections
 {
     public class CollectionWithGamesDto
     {

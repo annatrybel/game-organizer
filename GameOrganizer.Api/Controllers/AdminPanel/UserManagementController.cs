@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
+using GameOrganizer.Api.Models.Dto.Users;
 
 namespace GameOrganizer.Api.Controllers.Admin
 {

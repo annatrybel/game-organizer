@@ -1,5 +1,6 @@
 ﻿using GameOrganizer.Api.Models.DatabaseModels;
 using GameOrganizer.Api.Models.Dto;
+using GameOrganizer.Api.Models.Dto.Games;
 using GameOrganizer.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -46,7 +47,8 @@ namespace GameOrganizer.Api.Controllers
         [ProducesResponseType(typeof(DataTableResponse<Game>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAvailableTable([FromBody] DataTableRequest request)
         {
-            var result = await _gameService.GetAvailableGamesAsync(request);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _gameService.GetAvailableGamesAsync(request, userId);
             return HandleServiceResult(result);
         }
 

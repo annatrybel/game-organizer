@@ -2,6 +2,9 @@
 using GameOrganizer.Api.Models;
 using GameOrganizer.Api.Models.DatabaseModels;
 using GameOrganizer.Api.Models.Dto;
+using GameOrganizer.Api.Models.Dto.Collections;
+using GameOrganizer.Api.Models.Dto.Games;
+using GameOrganizer.Api.Models.Dto.Users;
 using GameOrganizer.Api.Services.Errors;
 using GameOrganizer.Api.Services.Interfaces;
 using GameOrganizer.Api.Services.Results;
