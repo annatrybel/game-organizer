@@ -1,6 +1,6 @@
 using GameOrganizer.Api.Models;
 using GameOrganizer.Api.Models.DatabaseModels;
-using GameOrganizer.Api.Models.Dto;
+using GameOrganizer.Api.Models.Dto.Games;
 using GameOrganizer.Api.Services;
 using GameOrganizer.Api.Services.Interfaces;
 using GameOrganizer.Api.Hubs;

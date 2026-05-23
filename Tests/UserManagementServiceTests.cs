@@ -1,6 +1,6 @@
 using GameOrganizer.Api.Models;
 using GameOrganizer.Api.Models.DatabaseModels;
-using GameOrganizer.Api.Models.Dto;
+using GameOrganizer.Api.Models.Dto.Users;
 using GameOrganizer.Api.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;

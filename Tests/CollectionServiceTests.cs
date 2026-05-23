@@ -1,6 +1,6 @@
 using GameOrganizer.Api.Models;
 using GameOrganizer.Api.Models.DatabaseModels;
-using GameOrganizer.Api.Models.Dto;
+using GameOrganizer.Api.Models.Dto.Collections;
 using GameOrganizer.Api.Services;
 using GameOrganizer.Api.Hubs;
 using Microsoft.AspNetCore.Hosting;
