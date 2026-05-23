@@ -354,8 +354,8 @@ void ConfigureMiddlewarePipeline(WebApplication app)
     }
 
     //dla demonstracji odkomentować
-    //app.UseSwagger();
-    //app.UseSwaggerUI();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 
     app.UseCors();
     app.UseAuthentication();
