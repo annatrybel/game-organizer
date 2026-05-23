@@ -20,15 +20,27 @@ namespace GameOrganizer.Api.Services
 
         public async Task<string?> UploadImageAsync(IFormFile file)
         {
-            if (file.Length <= 0) return null;
+            if (file == null || file.Length <= 0) return null;
+
+            long maxFileSize = 5 * 1024 * 1024;
+            if (file.Length > maxFileSize)
+                throw new Exception("Plik jest zbyt duży. Maksymalny rozmiar to 5MB.");
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var extension = Path.GetExtension(file.FileName).ToLower();
+            if (!allowedExtensions.Contains(extension))
+                throw new Exception("Niedozwolony format pliku. Akceptujemy tylko: .jpg, .jpeg, .png, .webp");
+
+            var allowedContentTypes = new[] { "image/jpeg", "image/png", "image/webp" };
+            if (!allowedContentTypes.Contains(file.ContentType.ToLower()))
+                throw new Exception("Nieprawidłowy typ zawartości pliku (MIME).");
 
             using var stream = file.OpenReadStream();
 
             var uploadParams = new ImageUploadParams
             {
                 File = new FileDescription(file.FileName, stream),
-                // transformacja (np. kwadrat 500x500)
-                //Transformation = new Transformation().Height(500).Width(500).Crop("fill")
+                Transformation = new Transformation().Height(800).Width(800).Crop("limit")
             };
 
             var uploadResult = await _cloudinary.UploadAsync(uploadParams);
